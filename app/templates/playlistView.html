@@ -1,0 +1,76 @@
+{% extends 'base.html' %} {% block title %}Your Page Title{% endblock %} {%
+block content %}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script src="/static/js/playlistView.js"></script>
+
+<div class="container">
+    <input type="hidden" id="playlistId" value="{{ playlist_id }}" />
+    <input type="hidden" id="platform" value="{{ platform }}" />
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-md-6">
+            <h1>Tracks</h1>
+            <ul>
+                {% for track in tracks %}
+                <div
+                    class="row mb-4"
+                    id="{% if not track.uri %}trackCard{{ track.id }}{% else %}trackCard{{ track.uri }}{% endif %}"
+                >
+                    <!-- Start a new row for each track -->
+                    <div class="col-md-12">
+                        <div class="d-flex position-relative">
+                            <img
+                                src="{{ track.small_image_url }}"
+                                class="flex-shrink-0 me-3"
+                                alt="..."
+                                width="200"
+                                height="200"
+                            />
+                            <div>
+                                <h5 class="mt-0">{{ track.name }}</h5>
+                                {% for artist in track.artists %}
+                                <p>{{ artist }}</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <button
+                            class="btn btn-danger remove-track-button"
+                            data-track-id="{% if not track.uri %}{{ track.id }}{% else %}{{ track.uri }}{% endif %}"
+                            onclick="removeTrack()"
+                        >
+                            Remove
+                        </button>
+                    </div>
+                </div>
+                <!-- Close the row for each track -->
+                {% endfor %}
+            </ul>
+        </div>
+        <!-- Right Column -->
+        <div class="col-md-6">
+            <!-- Search Bar -->
+
+            <div class="mb-3">
+                <input
+                    type="text"
+                    class="form-control"
+                    name="searchBar"
+                    id="searchBar"
+                    placeholder="Search..."
+                />
+                <button class="btn btn-primary" onclick="searchTracks()">
+                    Search
+                </button>
+            </div>
+
+            <!-- Search Results -->
+            <div id="searchResults">
+                <!-- Search results will be added here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

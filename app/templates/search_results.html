@@ -1,0 +1,26 @@
+{% for f_track in found_tracks %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex position-relative">
+            <img
+                src="{{ f_track.small_image_url }}"
+                class="flex-shrink-0 me-3"
+                alt="..."
+                width="200"
+                height="200"
+            />
+            <div>
+                <h5 class="mt-0">{{ f_track.name }}</h5>
+                {% for artist in f_track.artists %}
+                <p>{{ artist }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        <a
+            href="{{ url_for('remove_track_from_playlist', playlist_id=playlist_id, track_id=f_track.id) }}"
+            class="btn btn-danger"
+            >Delete</a
+        >
+    </div>
+</div>
+{% endfor %}

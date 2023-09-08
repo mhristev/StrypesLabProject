@@ -1,0 +1,8 @@
+1. get_playlists_curr_user -> DONE
+2. get_tracks(playlist_id, access_token) -> DONE
+3. get_user
+4. create_playlist -> DONE
+5. add_to_playlist(access_token, playlist_id, track_ids) -> DONE
+6. find_songs_by_names(names) -> DONE
+
+LINK structure: https://www.digitalocean.com/community/tutorials/how-to-structure-a-large-flask-application-with-flask-blueprints-and-flask-sqlalchemy

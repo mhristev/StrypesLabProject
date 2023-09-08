@@ -1,0 +1,268 @@
+{% extends 'base.html' %} {% block title %}Your Page Title{% endblock %} {%
+block content %}
+
+<script>
+    /*
+    it's been a while since this was posted but I found a more elegant solution if you are not needing to support old browsers.
+
+        You can do a check with
+
+        performance.navigation.type
+        Documentation including browser support is here: https://developer.mozilla.org/en-US/docs/Web/API/Performance/navigation
+
+        So to see if the page was loaded from history using back you can do
+
+        if(performance.navigation.type == 2){
+        location.reload(true);
+        }
+        The 2 indicates the page was accessed by navigating into the history. Other possibilities are-
+
+        0:The page was accessed by following a link, a bookmark, a form submission, or a script, or by typing the URL in the address bar.
+
+        1:The page was accessed by clicking the Reload button or via the Location.reload() method.
+
+        255: Any other way
+
+        These are detailed here: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceNavigation
+    */
+    if (performance.navigation.type == 2) {
+        location.reload(true);
+    }
+    // JavaScript for handling playlist deletion
+    // JavaScript for handling playlist deletion
+    function deletePlaylist(platform, playlistId) {
+        console.log(platform);
+        console.log(playlistId);
+        fetch(`/delete/${platform}/${playlistId}`, {
+            method: "POST",
+        })
+            .then((response) => {
+                if (response.ok) {
+                    console.log("TIIIIKKKK");
+                    // Handle success, e.g., remove the playlist card from the UI
+                    const playlistCard = document.getElementById(
+                        `playlistCard${playlistId}`
+                    );
+                    if (playlistCard) {
+                        playlistCard.remove();
+                    }
+                } else {
+                    // Handle errors here
+                    console.error("Error deleting playlist");
+                }
+            })
+            .catch((error) => {
+                // Handle network or other errors here
+                console.error("Error:", error);
+            });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const createPlaylistButton = document.getElementById(
+            "createPlaylistButton"
+        );
+        const spotifyPlaylistsContainer = document.getElementById(
+            "spotifyPlaylistsContainer"
+        );
+        createPlaylistButton.addEventListener("click", function (e) {
+            e.preventDefault(); // Prevent the default form submission behavior
+
+            const form = document.getElementById("createPlaylistForm");
+            const formData = new FormData(form);
+
+            fetch("/create_playlist", {
+                method: "POST",
+                body: formData,
+            })
+                .then((response) => {
+                    if (response.ok) {
+                        // Handle success, you can optionally redirect or show a success message
+                        console.log("Playlist created successfully!");
+                        response.json().then((data) => {
+                            console.log(data);
+                            const playlistId = data.data.playlist_id; // Replace with the actual field name from your Flask response
+                            const playlistName = data.data.playlist_name; // Replace with the actual field name from your Flask response
+                            const viewUrl = data.data.view_url;
+                            const deleteUrl = data.data.delete_url;
+                            const transferUrl = data.data.transfer_url;
+                            console.log("Playlist name: " + playlistName);
+                            console.log(playlistId);
+                            // Create a new card element
+                            const newCard = document.createElement("div");
+                            newCard.className = "col-md-4";
+                            newCard.innerHTML = `
+                <div class="card mb-4" style="width: 18rem">
+                    <img
+                        src=""
+                        class="card-img-top"
+                        alt="..."
+                    />
+                    <div class="card-body">
+                        <p class="card-text">${playlistName}</p>
+                    </div>
+                    <a
+                        href="${viewUrl}"
+                        class="btn btn-primary stretched-link"
+                    >View</a>
+                </div>
+                <a
+                    href="${deleteUrl}"
+                    class="btn btn-warning"
+                >Unfollow</a>
+                <a
+                    href="${transferUrl}"
+                    class="btn btn-warning"
+                >Send to Deezer</a>
+            `;
+
+                            const firstCard =
+                                spotifyPlaylistsContainer.firstChild;
+                            spotifyPlaylistsContainer.insertBefore(
+                                newCard,
+                                firstCard
+                            );
+                        });
+                    } else {
+                        // Handle errors here
+                        console.error("Error creating playlist");
+                    }
+                })
+                .catch((error) => {
+                    // Handle network or other errors here
+                    console.error("Error:", error);
+                });
+        });
+    });
+</script>
+
+<script>
+    function updateFormName(formName) {
+        // Get the hidden input element
+        const form = document.forms[formName];
+        const formNameInput = form.querySelector('[name="form_name"]');
+
+        // Update the hidden input's value
+        formNameInput.value = formName;
+    }
+</script>
+<h1>Playlists Spotify</h1>
+{% if spotify_playlists != None %}
+<div class="input-group">
+    <form id="createPlaylistForm">
+        <input type="hidden" name="form_name" value="spotify" />
+        <input
+            type="text"
+            class="form-control"
+            name="new_playlist_name"
+            placeholder="New Playlist Name"
+        />
+        <button class="btn btn-primary" id="createPlaylistButton">
+            Create
+        </button>
+    </form>
+</div>
+
+<ul>
+    <div class="row" id="spotifyPlaylistsContainer">
+        {% for playlist in spotify_playlists %}
+        <div class="col-md-4" id="playlistCard{{ playlist.id }}">
+            <div class="card mb-4" style="width: 18rem">
+                <img
+                    src="{{ playlist.image_url }}"
+                    class="card-img-top"
+                    alt="..."
+                />
+                <div class="card-body">
+                    <p class="card-text">{{ playlist.name }}</p>
+                </div>
+                <a
+                    href="{{ url_for('view', playlist_id=playlist.id, platform='spotify') }}"
+                    class="btn btn-primary stretched-link"
+                    >View</a
+                >
+            </div>
+            <!-- <a
+                href="{{ url_for('delete', platform='spotify', playlist_id=playlist.id) }}"
+                class="btn btn-warning"
+                >Unfollow</a
+            > -->
+            <a
+                href="#"
+                class="btn btn-warning"
+                onclick="deletePlaylist('spotify', '{{ playlist.id }}')"
+            >
+                Unfollow
+            </a>
+            <a
+                href="{{ url_for('transfer_to_deezer', playlist_id=playlist.id) }}"
+                class="btn btn-warning"
+                >Send to Deezer</a
+            >
+        </div>
+        {% endfor %}
+    </div>
+</ul>
+{% else %}
+<div class="alert alert-warning" role="alert">No Spotify playlists found.</div>
+<a href="{{ url_for('auth_spotify') }}" class="btn btn-primary"
+    >Authorize Spotify</a
+>
+{% endif %}
+
+<h1>Playlists Deezer</h1>
+{% if deezer_playlists != None %}
+<div class="input-group">
+    <form
+        method="POST"
+        action="/create_playlist"
+        name="create_playlist2"
+        id="playlistForm2"
+    >
+        <input type="hidden" name="form_name" value="deezer" />
+        <input
+            type="text"
+            class="form-control"
+            name="new_playlist_name"
+            id="new_playlist_name2"
+            placeholder="New Playlist Name"
+        />
+        <button class="btn btn-primary" onclick="updateFormName('form2')">
+            Create
+        </button>
+    </form>
+</div>
+
+<ul>
+    <div class="row">
+        {% for playlist in deezer_playlists %}
+        <div class="col-md-4">
+            <div class="card mb-4" style="width: 18rem">
+                <img
+                    src="{{ playlist.image_url }}"
+                    class="card-img-top"
+                    alt="..."
+                />
+                <div class="card-body">
+                    <p class="card-text">{{ playlist.name }}</p>
+                </div>
+                <a
+                    href="{{ url_for('view', playlist_id=playlist.id, platform='deezer') }}"
+                    class="btn btn-primary stretched-link"
+                    >View</a
+                >
+            </div>
+            <a
+                href="{{ url_for('delete', platform='deezer', playlist_id=playlist.id) }}"
+                class="btn btn-warning"
+                >Delete</a
+            >
+        </div>
+        {% endfor %}
+    </div>
+</ul>
+{% else %}
+<div class="alert alert-warning" role="alert">No Deezer playlists found.</div>
+<a href="{{ url_for('auth_deezer') }}" class="btn btn-primary"
+    >Authorize Deezer</a
+>
+{% endif %} {% endblock %}
