@@ -87,7 +87,7 @@ class SpotifyClient:
         }
         url = f"{self.SPOTIFY_API_BASE_URL}playlists/{playlist_id}/tracks"
         response = requests.get(url=url, params=params, headers=headers)
-
+        print(response.text)
         tracks = []
         if response.status_code == 200:
             tracks_data = response.json()
@@ -95,10 +95,10 @@ class SpotifyClient:
                 track_name = track["track"]["name"]
                 artists = track["track"]["artists"]
                 artist_names = [artist["name"] for artist in artists]
-                small_image_url = track["track"]["album"]["images"][0]["url"] if track["track"]["album"]["images"] else None
+                image_url = track["track"]["album"]["images"][0]["url"] if track["track"]["album"]["images"] else None
                 uri = track["track"]["uri"]
                 id = track["track"]["id"]
-                tracks.append(Track(uri=uri, name=track_name, artists=artist_names, small_image_url=small_image_url, id=id))
+                tracks.append(Track(uri=uri, name=track_name, artists=artist_names, image_url=image_url, id=id))
             return tracks
     
     def get_current_user_id(self):
@@ -158,8 +158,8 @@ class SpotifyClient:
             for artist in track_data["artists"]:
                 artists_names.append(artist["name"])
             uri = track_data["uri"]
-            small_image_url = track_data["album"]["images"][-1]["url"]
-            return Track(id=id, name=name, artists=artists_names, uri=uri, small_image_url=small_image_url)
+            image_url = track_data["album"]["images"][-1]["url"]
+            return Track(id=id, name=name, artists=artists_names, uri=uri, image_url=image_url)
         else:
             print(f"Error whole getting track data {response.status_code}")
             
@@ -202,8 +202,8 @@ class SpotifyClient:
                             artists_names.append(artist["name"])
                         uri = track["uri"]
                         id = track["id"]
-                        small_image_url = track["album"]["images"][-1]["url"]
-                        tracks.append(Track(name=track_name, artists=artists_names, uri=uri, small_image_url=small_image_url, id=id))
+                        image_url = track["album"]["images"][-1]["url"]
+                        tracks.append(Track(name=track_name, artists=artists_names, uri=uri, image_url=image_url, id=id))
                         break
         return tracks
     
@@ -227,8 +227,8 @@ class SpotifyClient:
                     artists_names.append(artist["name"])
                 uri = track["uri"]
                 id = track["id"]
-                small_image_url = track["album"]["images"][-1]["url"]
-                found_tracks.append(Track(name=track_name, artists=artists_names, uri=uri, small_image_url=small_image_url, id=id))
+                image_url = track["album"]["images"][-1]["url"]
+                found_tracks.append(Track(name=track_name, artists=artists_names, uri=uri, image_url=image_url, id=id))
         
         return found_tracks
     

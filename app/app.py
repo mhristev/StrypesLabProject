@@ -109,7 +109,7 @@ def add_to_playlist():
             'name': track.name,
             'artists': track.artists,
             'uri' : track.uri,
-            'image_url': track.small_image_url
+            'image_url': track.image_url
         }
     return jsonify(data=serialized_data), 200
 
@@ -209,7 +209,7 @@ def search():
             'name': track.name,
             'artists': track.artists,
             'uri' : track.uri,
-            'image_url': track.small_image_url
+            'image_url': track.image_url
         }
         for track in found_tracks
     ]
@@ -246,10 +246,24 @@ def remove_track_from_playlist():
     return jsonify(), 200
 
 
-@app.route('/transfer_to_deezer/<playlist_id>', methods=['POST', 'GET'])
-def transfer_to_deezer(playlist_id):
+@app.route('/transfer_playlist_spotify_to_deezer', methods=['POST'])
+def transfer_playlist_spotify_to_deezer():
+    # print("AAAAAAAAA")
+    # print(request.json())
+    token_info_spotify = session.get(TOKEN_INFO_SPOTIFY)
+    token_info_deezer = session.get(TOKEN_INFO_DEEZER)
+    spotify_client = get_spotify_client(access_token=token_info_spotify)
     
-    return "blabla" + playlist_id
+    playlist_id = request.json.get("playlist_id")
+    name = request.json.get("name")
+    
+    tracks = spotify_client.get_tracks_in_playlist(playlist_id)
+    #TODO napravi offset i limit shoto max e 100 ako playlista e > 100 stava meh
+    deezer_client = get_deezer_client(access_token=token_info_deezer)
+    new_playlist_id = deezer_client.create_playlist(name)
+    deezer_client.add_tracks_to_playlist(new_playlist_id, tracks)
+    
+    return jsonify(), 200
     
 
 

@@ -1,3 +1,31 @@
+function transferSpotifyToDeezer(playlistId) {
+    console.log(playlistId);
+    fetch("/transfer_playlist_spotify_to_deezer", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            playlist_id: playlistId,
+            name: "transfer1",
+        }),
+    })
+        .then((response) => {
+            // Handle the server's response here (e.g., show a success message)
+            if (response.ok) {
+                console.log("Playlist transferred successfully");
+                $("#deezerModal" + playlistId).modal("hide");
+                // You can perform further actions or update the UI as needed
+            } else {
+                console.error("Failed to transfer playlist");
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+
+    // Close the modal (optional)
+}
 // JavaScript for handling playlist deletion
 // JavaScript for handling playlist deletion
 function deletePlaylist(platform, playlistId) {
