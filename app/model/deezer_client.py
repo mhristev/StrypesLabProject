@@ -151,6 +151,34 @@ class DeezerClient:
             print(f"Added track to the playlist")
         else:
             print(f"Failed to add track to the playlist")
+            
+    def add_track_id_to_playlist(self, playlist_id, track_id):
+    
+        url = f"http://api.deezer.com/playlist/{playlist_id}/tracks?{self.session_access_token}&songs={track_id}"
+        # url = f"http://api.deezer.com/playlist/{playlist_id}/tracks?{self.session_access_token}"
+        
+        response = requests.post(url)
+        print(response.text)
+        print(response.status_code)
+        if response.status_code == 200:
+            print(f"Added track to the playlist")
+        else:
+            print(f"Failed to add track to the playlist")
+    
+    
+    def get_track(self, track_id):
+        url = f"https://api.deezer.com/track/{track_id}?{self.session_access_token}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            track_data = response.json()
+            name = track_data["title"]
+            id = track_data["id"]
+            artist_name = track_data["artist"]["name"]
+            img = track_data["album"]["cover_big"]
+            return Track(id=id, name=name, artists=[artist_name], uri=None, small_image_url=img)
+        else:
+            print(f"Error while getting track {response.status_code}")
+
     
     def remove_track_from_playlist(self, playlist_id, track_id):
         url = f"https://api.deezer.com/playlist/{playlist_id}/tracks?{self.session_access_token}&songs={track_id}"
@@ -160,6 +188,24 @@ class DeezerClient:
         print(response.status_code)
         print("*" * 30)
     
+    def search_for_tracks_with_name(self, name):
+        url = f"https://api.deezer.com/search/track?q={name}&{self.session_access_token}"
+        tracks = []
+        response = requests.get(url)
+        if response.status_code == 200:
+            tracks_data = response.json()
+            for song in tracks_data["data"]:
+                name = song["title"]
+                id = song["id"]
+                artist_name = song["artist"]["name"]
+                img = song["album"]["cover_big"]
+                tracks.append(Track(id=id, name=name, artists=[artist_name], uri=None, small_image_url=img))
+        else:
+            print(f"Error while fething search results: {response.status_code}")
+        
+        return tracks
+        
+        
     def find_tracks_by_names(names):
         ids = []
         for name in names:

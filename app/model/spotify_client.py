@@ -56,7 +56,7 @@ class SpotifyClient:
             playlists_data = result.json()
             for item in playlists_data["items"]:
                 id = item["id"]
-                image_url = item["images"][0]["url"] if item["images"] else None
+                image_url = item["images"][0]["url"] if item["images"] else "https://e-cdns-images.dzcdn.net/images/cover//500x500-000000-80-0-0.jpg"
                 name = item["name"]
                 nb_of_tracks = item["tracks"]["total"]
                 playlists.append(Playlist(id, image_url, name, nb_of_tracks))
@@ -122,7 +122,48 @@ class SpotifyClient:
             return response.json()["id"]
         else:
             print(f"Errr while creating playlist with status code: {response.status_code}")
+    
+    
+    def add_track_uri_to_playlist(self, track_uri, playlist_id):
+        headers = self._get_headers()
+        print(track_uri)
+        data = {
+            "uris": [track_uri],
+            "position": 0
+        }
+    
+        url = f"{self.SPOTIFY_API_BASE_URL}playlists/{playlist_id}/tracks?"
+        
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+        print(response.text)
+        if response.status_code == 201:
+            print("Successfully added to playlist!")
+        else:
+            print(response.status_code)
+            print("Err while adding tracks to playlist!")
+    
+    
+    def get_track(self, track_uri):
+        track_id = track_uri.split(":")[2]
+        url = f"{self.SPOTIFY_API_BASE_URL}tracks/{track_id}"
+        headers = self._get_headers()
+        
+        response = requests.get(url, headers=headers)
+        # print(response.text)
+        if response.status_code == 200:
+            track_data = response.json()
+            id = track_data["id"]
+            name = track_data["name"]
+            artists_names = []
+            for artist in track_data["artists"]:
+                artists_names.append(artist["name"])
+            uri = track_data["uri"]
+            small_image_url = track_data["album"]["images"][-1]["url"]
+            return Track(id=id, name=name, artists=artists_names, uri=uri, small_image_url=small_image_url)
+        else:
+            print(f"Error whole getting track data {response.status_code}")
             
+    
     def add_tracks_to_playlist(self, tracks, playlist_id):
         headers = self._get_headers()
         track_uris = [track.uri for track in tracks]
@@ -166,7 +207,7 @@ class SpotifyClient:
                         break
         return tracks
     
-    def search_for_tracks_by_name(self, name):
+    def search_for_tracks_with_name(self, name):
         found_tracks = []
         
         headers = self._get_headers()

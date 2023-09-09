@@ -12,7 +12,7 @@ block content %}
         <!-- Left Column -->
         <div class="col-md-6">
             <h1>Tracks</h1>
-            <ul>
+            <div id="playlistTracks">
                 {% for track in tracks %}
                 <div
                     class="row mb-4"
@@ -38,7 +38,7 @@ block content %}
                         <button
                             class="btn btn-danger remove-track-button"
                             data-track-id="{% if not track.uri %}{{ track.id }}{% else %}{{ track.uri }}{% endif %}"
-                            onclick="removeTrack()"
+                            onclick="removeTrackFromPlaylist('{{ track.uri if track.uri else track.id }}', '{{ playlist_id }}', '{{ platform }}')"
                         >
                             Remove
                         </button>
@@ -46,7 +46,7 @@ block content %}
                 </div>
                 <!-- Close the row for each track -->
                 {% endfor %}
-            </ul>
+            </div>
         </div>
         <!-- Right Column -->
         <div class="col-md-6">

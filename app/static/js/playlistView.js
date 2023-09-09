@@ -6,7 +6,7 @@ function searchTracks() {
     const platform = document.getElementById("platform").value;
     console.log(playlist_id, platform);
     // Send a POST request to /baba with the search query
-    fetch("/baba", {
+    fetch("/search_tracks", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -25,42 +25,31 @@ function searchTracks() {
 
             // Create Bootstrap cards for each track
             data.results.forEach((track) => {
-                const card = document.createElement("div");
-                card.className = "card mb-3";
-                card.style = "max-width: 500px;";
+                const newCard = document.createElement("div");
+                newCard.className = "row g-0";
+                var track_identifier = null;
+                if (track.uri == null) {
+                    track_identifier = track.id;
+                } else {
+                    track_identifier = track.uri;
+                }
+                newCard.id = "FoundTrackCard" + track_identifier;
+                newCard.innerHTML = `
+                <div class="col-md-4">
+      <img src="${track.image_url}" class="img-fluid rounded-start" alt="...">
+    </div>
+    <div class="col-md-8">
+      <div class="card-body">
+        <h5 class="card-title"> ${track.name}</h5>
+        <p class="card-text">${"Artists: " + track.artists.join(", ")}</p>
+        <p class="card-text"><small class="text-muted">Album:</small></p>
+        <button class="btn btn-primary" onclick="addToPlaylist('${track_identifier}')">Add to Playlist</button>
+      </div>
+    </div>
+  </div>
+  `;
 
-                const innerDiv1 = document.createElement("div");
-                innerDiv1.className = "row g-0";
-                card.appendChild(innerDiv1);
-
-                const innerDiv2 = document.createElement("div");
-                innerDiv2.className = "col-md-4";
-                innerDiv1.appendChild(innerDiv2);
-
-                const image = document.createElement("img");
-                image.src = track.image_url;
-                image.className = "img-fluid rounded-start";
-                innerDiv2.appendChild(image);
-
-                const innerDiv3 = document.createElement("div");
-                innerDiv3.className = "col-md-8";
-                innerDiv1.appendChild(innerDiv3);
-
-                const cardBody = document.createElement("div");
-                cardBody.className = "card-body";
-                innerDiv3.appendChild(cardBody);
-
-                const title = document.createElement("h5");
-                title.className = "card-title";
-                title.textContent = track.name;
-                cardBody.appendChild(title);
-
-                const artists = document.createElement("p");
-                artists.className = "card-text";
-                artists.textContent = "Artists: " + track.artists.join(", ");
-                cardBody.appendChild(artists);
-
-                searchResultsDiv.appendChild(card);
+                searchResultsDiv.appendChild(newCard);
             });
         })
         .catch((error) => {
@@ -68,48 +57,114 @@ function searchTracks() {
         });
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    const removeTrackButtons = document.querySelectorAll(
-        ".remove-track-button"
-    );
+function addToPlaylist(trackId) {
+    console.log("AAAAA");
+    // Get the value of the hidden input with id "playlistId"
+    const playlistId = document.getElementById("playlistId").value;
 
-    removeTrackButtons.forEach((button) => {
-        button.addEventListener("click", function () {
-            const trackId = button.getAttribute("data-track-id");
+    // Get the value of the hidden input with id "platform"
+    const platform = document.getElementById("platform").value;
+    console.log(trackId, playlistId, platform);
+    fetch(`/add_to_playlist`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            track_indentifier: trackId,
+            platform: platform,
+            playlist_id: playlistId,
+        }),
+    })
+        .then((response) => {
+            if (response.ok) {
+                response.json().then((data) => {
+                    console.log(data);
+                    track_name = data.data.name;
+                    track_image = data.data.image_url;
+                    console.log(track_name, track_image);
+                    const cardHtml = `
+                    <div class="row mb-4" id="trackCard${trackId}">
+                        <!-- Start a new row for each track -->
+                        <div class="col-md-12">
+                            <div class="d-flex position-relative">
+                                <img
+                                    src="${track_image}"
+                                    class="flex-shrink-0 me-3"
+                                    alt="..."
+                                    width="200"
+                                    height="200"
+                                />
+                                <div>
+                                    <h5 class="mt-0">${track_name}</h5>
+                                 
+                                </div>
+                            </div>
+                            <button
+                                class="btn btn-danger remove-track-button"
+                                onclick="removeTrackFromPlaylist(${trackId}, ${playlistId}, ${platform})"
+                            >
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+                `;
+                    const playlistTracksContainer =
+                        document.getElementById("playlistTracks");
 
-            const playlist_id = document.getElementById("playlistId").value;
-            const platform = document.getElementById("platform").value;
-            const cardId = `trackCard${trackId}`;
+                    // Create a new div element to hold the card
+                    const newCardContainer = document.createElement("div");
 
-            fetch(`/remove_track_from_playlist`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    track_id: trackId,
-                    platform: platform,
-                    playlist_id: playlist_id,
-                }),
-            })
-                .then((response) => {
-                    if (response.ok) {
-                        const cardToRemove = document.getElementById(cardId);
-                        if (cardToRemove) {
-                            cardToRemove.remove();
-                            console.log(`Track with ID ${trackId} removed.`);
-                        } else {
-                            console.log(`Track with ID ${trackId} not found.`);
-                        }
-                    } else {
-                        // Handle error cases here
-                        console.error("Error removing track");
-                    }
-                })
-                .catch((error) => {
-                    // Handle network or other errors here
-                    console.error("Error:", error);
+                    // Set the innerHTML of the new container to the card HTML
+                    newCardContainer.innerHTML = cardHtml;
+
+                    // Insert the new card at the beginning of the container
+                    playlistTracksContainer.insertBefore(
+                        newCardContainer,
+                        playlistTracksContainer.firstChild
+                    );
                 });
+            } else {
+                // Handle error cases here
+                console.error("Error removing track");
+            }
+        })
+        .catch((error) => {
+            // Handle network or other errors here
+            console.error("Error:", error);
         });
-    });
-});
+}
+
+function removeTrackFromPlaylist(trackId, playlistId, platform) {
+    const cardId = `trackCard${trackId}`;
+    console.log(trackId, playlistId, platform);
+    fetch(`/remove_track_from_playlist`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            track_id: trackId,
+            platform: platform,
+            playlist_id: playlistId,
+        }),
+    })
+        .then((response) => {
+            if (response.ok) {
+                const cardToRemove = document.getElementById(cardId);
+                if (cardToRemove) {
+                    cardToRemove.remove();
+                    console.log(`Track with ID ${trackId} removed.`);
+                } else {
+                    console.log(`Track with ID ${trackId} not found.`);
+                }
+            } else {
+                // Handle error cases here
+                console.error("Error removing track");
+            }
+        })
+        .catch((error) => {
+            // Handle network or other errors here
+            console.error("Error:", error);
+        });
+}

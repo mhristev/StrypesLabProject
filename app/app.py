@@ -66,25 +66,52 @@ def create_playlist():
     form_name = request.form['form_name']
     new_playlist_name = request.form['new_playlist_name']
     playlist_id = None
+    
     if form_name.lower() == "spotify":
         spotify_client = get_spotify_client(access_token=token_info_spotify)
         playlist_id = spotify_client.create_playlist(name=new_playlist_name.strip())
     elif form_name.lower() == "deezer":
         deezer_client = get_deezer_client(access_token=token_info_deezer)
         playlist_id = deezer_client.create_playlist(name=new_playlist_name.strip())
-    
+    image_url = "https://e-cdns-images.dzcdn.net/images/cover//500x500-000000-80-0-0.jpg"
     data = { 
         'playlist_id': playlist_id,
         'playlist_name': new_playlist_name,
-        'view_url': url_for('view', playlist_id=playlist_id, platform='spotify'),
-        'delete_url': url_for('delete', platform='spotify', playlist_id=playlist_id),
-        'transfer_url': url_for('transfer_to_deezer', playlist_id=playlist_id)
+        'image_url': image_url,
+        'view_url': url_for('view', playlist_id=playlist_id, platform=form_name.lower()),
+        'delete_url': url_for('delete', platform=form_name.lower(), playlist_id=playlist_id),
+        'transfer_url': url_for('transfer_to_deezer', playlist_id=playlist_id),
+        'platform' : form_name.lower()
     }
-     
-    # Return the search results as JSON
-    return jsonify(data=data)
+    return jsonify(data=data), 200
+
+@app.route('/add_to_playlist', methods=['POST'])
+def add_to_playlist():
     
-    return redirect(url_for('playlists'))
+    print("SAAAAA")
+    token_info_spotify = session.get(TOKEN_INFO_SPOTIFY)
+    token_info_deezer = session.get(TOKEN_INFO_DEEZER)
+    platform = request.json.get('platform')
+    track_indentifier = request.json.get('track_indentifier')
+    playlist_id = request.json.get('playlist_id')
+    track = None
+    if platform.lower() == 'spotify':
+        spotify_client = get_spotify_client(access_token=token_info_spotify)
+        spotify_client.add_track_uri_to_playlist(track_uri=track_indentifier, playlist_id=playlist_id)
+        track = spotify_client.get_track(track_uri=track_indentifier)
+        
+    elif platform.lower() == 'deezer':
+        deezer_client = get_deezer_client(access_token=token_info_deezer)
+        deezer_client.add_track_id_to_playlist(playlist_id=playlist_id, track_id=track_indentifier)
+        track = deezer_client.get_track(track_id=track_indentifier)
+    serialized_data =  {
+            'id': track.id,
+            'name': track.name,
+            'artists': track.artists,
+            'uri' : track.uri,
+            'image_url': track.small_image_url
+        }
+    return jsonify(data=serialized_data), 200
 
 
 @app.route('/playlists')
@@ -159,19 +186,22 @@ def delete(platform, playlist_id):
     #     print(t.name)
     # return redirect(url_for('view', platform=platform, playlist_id=playlist_id, found_tracks=found_tracks))
     
-@app.route('/baba', methods=['POST'])
+@app.route('/search_tracks', methods=['POST'])
 def search():
     # Assuming you perform a search and get search results here
     search_results = ["Result 1", "Result 2", "Result 3"]
     search_query = request.json.get('searchQuery')
     platform = request.json.get('platform')
-    
+    token_info_deezer = session.get(TOKEN_INFO_DEEZER)
     token_info_spotify = session.get(TOKEN_INFO_SPOTIFY)
     found_tracks = []
 
     if platform.lower() == "spotify":
         spotify_client = get_spotify_client(access_token=token_info_spotify)
-        found_tracks = spotify_client.search_for_tracks_by_name(search_query)
+        found_tracks = spotify_client.search_for_tracks_with_name(search_query.strip())
+    elif platform.lower() == "deezer":
+        deezer_client = get_deezer_client(access_token=token_info_deezer)
+        found_tracks = deezer_client.search_for_tracks_with_name(search_query.strip())
     
     serialized_results = [
         {
