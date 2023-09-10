@@ -1,0 +1,33 @@
+{% extends "base.html" %} {% block title %}Login - Your App{% endblock %} {%
+block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Login</div>
+            <div class="card-body">
+                <a
+                    type="button"
+                    class="btn btn-success btn-block"
+                    href="{{ url_for('auth_spotify') }}""
+                >
+                    Sign in with Spotify
+            </a>
+                <a
+                    type="button"
+                    class="btn btn-info btn-block"
+                    href="{{ url_for('auth_deezer') }}""
+                >
+                    Sign in with Deezer
+                </a>
+                <button
+                    type="button"
+                    class="btn btn-danger btn-block"
+                    onclick="signInWithGoogle()"
+                >
+                    Sign in with Google
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

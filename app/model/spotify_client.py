@@ -142,6 +142,19 @@ class SpotifyClient:
             print(response.status_code)
             print("Err while adding tracks to playlist!")
     
+    def get_playlist(self, playlist_id):
+        headers = self._get_headers()
+        url = f"{self.SPOTIFY_API_BASE_URL}playlists/{playlist_id}"
+        
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code == 200:
+            playlist_data = response.json()
+            id = playlist_data["id"]
+            name = playlist_data["name"]
+            img = playlist_data["images"][0]["url"] if playlist_data["images"] else "https://e-cdns-images.dzcdn.net/images/cover//500x500-000000-80-0-0.jpg"
+            nb_of_tracks = playlist_data["tracks"]["total"]
+            return Playlist(id=id, image_url=img, name=name, number_of_tracks=nb_of_tracks)
     
     def get_track(self, track_uri):
         track_id = track_uri.split(":")[2]
@@ -162,16 +175,50 @@ class SpotifyClient:
             return Track(id=id, name=name, artists=artists_names, uri=uri, image_url=image_url)
         else:
             print(f"Error whole getting track data {response.status_code}")
-            
+        
+    def search_track(self, name, artists_names):
+        headers = self._get_headers()
+        str_artists = ",".join(artists_names)
+
+        url = f"{self.SPOTIFY_API_BASE_URL}search?q={name}artist:{str_artists}&type=track&offset=0&limit=5"
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            songs_data = response.json()
+            tracks = songs_data.get("tracks", {}).get("items", [])
+            for track in tracks:
+                track_name = track["name"]
+                if track_name.lower().strip() in name.lower().strip() or name.lower().strip() in track_name.lower().strip():
+                    uri = track["uri"]
+                    return uri
+
+    
+    def get_tracks_uri(self, tracks):
+        track_uris = []
+        for track in tracks:
+            name = track.name
+            artists = track.artists
+            track_uri = self.search_track(name=name, artists_names=artists)
+            if track_uri and track_uri not in track_uris:
+                track_uris.append(track_uri)
+        return track_uris
+        
     
     def add_tracks_to_playlist(self, tracks, playlist_id):
         headers = self._get_headers()
-        track_uris = [track.uri for track in tracks]
-      
+        
+        track_uris = self.get_tracks_uri(tracks)
+        print(track_uris)
         data = {
             "uris": list(track_uris),
             "position": 0
         }
+        if len(track_uris) == 1:
+            data = {
+            "uris": [track_uris[0]],
+            "position": 0
+        }
+        
     
         url = f"{self.SPOTIFY_API_BASE_URL}playlists/{playlist_id}/tracks?"
         
@@ -181,6 +228,7 @@ class SpotifyClient:
             print("Successfully added to playlist!")
         else:
             print(response.status_code)
+            print(response.text)
             print("Err while adding tracks to playlist!")
             
     def find_tracks_by_names(self, names):
@@ -299,6 +347,43 @@ class SpotifyClient:
         #     print("Error while fetching current user information!")
         pass
     
+    def refresh_token_if_needed(self):
+        token_info = self.session_token_info
+        print(token_info)
+        now = int(time.time())
+        is_expired = int(token_info['expires_in']) - now < 60
+
+        if is_expired:
+            refresh_token_info = self.refresh_token(token_info['refresh_token'])
+            token_info['access_token'] = refresh_token_info['access_token']
+            token_info['expires_in'] = now + refresh_token_info['expires_in']
+    
+        return token_info
+    
+    def refresh_token(self, refresh_token):
+        data = {
+            'grant_type': 'refresh_token',
+            'refresh_token': refresh_token,
+            'client_id': self.client_id,
+            'client_secret': self.client_secret,
+        }
+        response = requests.post(self.SPOTIFY_TOKEN_URL, data=data)
+        return response.json()
+    
+    def get_current_user_top_artists(self):
+        t = "artists"
+        headers = self._get_headers()
+        url = f"{self.SPOTIFY_API_BASE_URL}me/top/{t}"
+        response = requests.get(url, headers=headers)
+        names = []
+        genres = [] 
+        if response.status_code == 200:
+            artists_data = response.json()
+            for item in artists_data["items"]:
+                names.append(item["name"])
+                genres.append(item["genres"])
+        
+        return names, genres
     
     # def get_token(self,):
     #     token_info = self.session_token_info

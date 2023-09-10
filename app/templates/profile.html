@@ -1,0 +1,17 @@
+{% extends "base.html" %} {% block title %}Login - Your App{% endblock %} {%
+block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h3>Top artists in Spotify</h3>
+        {% for name in names %}
+        <p>{{name}}</p>
+        {% endfor %}
+    </div>
+    <div class="col-md-6">
+        <h3>Top genres in Spotify</h3>
+        {% for genre, count in genres %}
+        <p>{{genre}}</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

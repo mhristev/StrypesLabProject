@@ -32,14 +32,43 @@ from requests_oauthlib import OAuth2Session
 from .playlist import Playlist
 from .track import Track
 import json
+import time
+from datetime import datetime, timedelta
 
 class DeezerClient:
-    def __init__(self, app_id, client_secret, redirect_uri, session_access_token=None):
+    def __init__(self, app_id, client_secret, redirect_uri, session_token_info=None):
         self.app_id = app_id
         self.client_secret = client_secret
         self.redirect_uri = redirect_uri
-        self.session_access_token = "access_token=" + str(session_access_token)
+        self.session_token_info = session_token_info
+        print("CONSTRCUTOE")
+        print(session_token_info)
 
+    
+    def get_session_access_token(self):
+        # access_token = self.session_token_info['access_token']
+        # print(self.session_token_info)
+        #access_token=frJgbQbpRDGiqRSb4A9Lmfk1SteOEEVncm6SaWnG1nZ2qgR8lzP&expires=781
+        return self.session_token_info
+    
+    def is_token_expired(self):
+        expires_in_seconds = int(self.session_token_info.split("expires=")[1])
+        expiration_time = datetime.now() + timedelta(seconds=expires_in_seconds)
+        current_time = datetime.now()
+
+        # Check if the token is expired
+        if current_time >= expiration_time:
+            print("Access token has expired")
+        else:
+            print("Access token is still valid")
+            
+        return current_time >= expiration_time
+        
+        now = int(time.time())
+        print(self.session_token_info)
+        return int() - now < 60
+        
+    
     def authorization_url(self):
         authorization_base_url = 'https://connect.deezer.com/oauth/auth.php'
         # params = {
@@ -47,8 +76,6 @@ class DeezerClient:
         #     'redirect_uri': self.redirect_uri,
         #     'perms': 'manage_library,delete_library',
         # }
-        print("AAAAAA")
-        print(self.app_id)
         deezer = OAuth2Session(self.app_id, redirect_uri=self.redirect_uri)
         auth_url, state =  deezer.authorization_url(authorization_base_url)
         print(auth_url)
@@ -63,15 +90,14 @@ class DeezerClient:
         }
         response = requests.post(token_url, data=data)
         print("TUKKKKKKKKKKKKK")
+        print(response.text)
         if response.status_code == 200:
-            token_data = response.text.split('=')
-            self.session_access_token = response.text
-            return token_data[1]
+            return response.text
         return None
 
     def get_playlists_curr_user(self):
-        print(f"BBBBBB P{self.session_access_token}")
-        url = f"https://api.deezer.com/user/me/playlists?{self.session_access_token}"
+        print(f"BBBBBB P{self.get_session_access_token()}")
+        url = f"https://api.deezer.com/user/me/playlists?{self.get_session_access_token()}"
         response = requests.get(url)
         playlists = []
         if response.status_code == 200:
@@ -89,7 +115,7 @@ class DeezerClient:
         
         
     def get_tracks_in_playlist(self, playlist_id): #TODO fix track return
-        response = requests.get(f"https://api.deezer.com/playlist/{playlist_id}/tracks?{self.session_access_token}")
+        response = requests.get(f"https://api.deezer.com/playlist/{playlist_id}/tracks?{self.get_session_access_token()}")
         tracks = []
         if response.status_code == 200:
             tracks_data = response.json()
@@ -99,7 +125,7 @@ class DeezerClient:
                 track_name = t["title"]
                 id = t["id"]
                 img = t["album"]["cover_big"]
-                tracks.append(Track(id=id, name=track_name, artists=artists_names, image_url=img, uri=""))
+                tracks.append(Track(id=id, name=track_name, artists=artists_names, image_url=img, uri=None))
         else:
             print('Error in get tracks')
         for t in tracks:
@@ -107,7 +133,7 @@ class DeezerClient:
         return tracks
 
     def get_user_id(self):
-        response = requests.get(f'https://api.deezer.com/user/me?{self.session_access_token}')
+        response = requests.get(f'https://api.deezer.com/user/me?{self.get_session_access_token()}')
         if response.status_code == 200:
             user_data = response.json()
             user_id = user_data['id']
@@ -118,7 +144,7 @@ class DeezerClient:
             print(f"Request failed with status code: {response.status_code}")
         
     def create_playlist(self, name):
-        url = f"https://api.deezer.com/user/me/playlists?{self.session_access_token}"
+        url = f"https://api.deezer.com/user/me/playlists?{self.get_session_access_token()}"
         response = requests.post(url, data={"title": name})  
 
         if response.status_code == 200:
@@ -129,45 +155,78 @@ class DeezerClient:
             print("Failed to create playlist")
     
     def delete_playlist(self, playlist_id):
-        url = f"https://api.deezer.com/playlist/{playlist_id}?{self.session_access_token}"
+        url = f"https://api.deezer.com/playlist/{playlist_id}?{self.get_session_access_token()}"
         
         response = requests.delete(url)
         
         print("deleting playlist")
         print(response.status_code)
     
-    def add_tracks_to_playlist(self, playlist_id, tracks):
-        track_ids = []
-        for t in tracks:
-            name = t.name
-            artists = t.artists
-            print(name)
-            print(artists)
-            id = self.find_track_by_name_artist(name=str(name), artists_names=artists)
-            track_ids.append(id)
+    # def add_tracks_to_playlist(self, playlist_id, tracks):
+    #     track_ids = []
+    #     for t in tracks:
+    #         name = t.name
+    #         artists = t.artists
+    #         print(name)
+    #         print(artists)
+    #         id = self.search_track(name=str(name), artists_names=artists)
+    #         track_ids.append(id)
       
-        # data = {
-        #     "uris": list(track_uris),
-        #     "position": 0
-        # }
+    #     # data = {
+    #     #     "uris": list(track_uris),
+    #     #     "position": 0
+    #     # }
+    #     url = ""
+    #     if len(track_ids) > 1:
+    #         url = f"http://api.deezer.com/playlist/{playlist_id}/tracks?{self.get_session_access_token()}&songs={list(track_ids)}"
+    #     else:
+    #         url = f"http://api.deezer.com/playlist/{playlist_id}/tracks?{self.get_session_access_token()}&songs={track_ids[0]}"
+    #     # url = f"http://api.deezer.com/playlist/{playlist_id}/tracks?{self.get_session_access_token()}"
+    #     response = requests.post(url)
+    #     print(response.status_code)
+    #     print(response.text)
+    #     if response.status_code == 200:
+    #         print(f"Added track to the playlist")
+    #     else:
+    #         print(f"Failed to add track to the playlist")
+    def add_tracks_to_playlist(self, playlist_id, tracks):
+        track_ids = self.get_track_ids(tracks)
+        print(track_ids)
+        if not track_ids:
+            print("No track IDs found.")
+            return
         url = ""
-        if len(track_ids) > 1:
-            url = f"http://api.deezer.com/playlist/{playlist_id}/tracks?{self.session_access_token}&songs={list(track_ids)}"
-        else:
-            url = f"http://api.deezer.com/playlist/{playlist_id}/tracks?{self.session_access_token}&songs={track_ids[0]}"
-        # url = f"http://api.deezer.com/playlist/{playlist_id}/tracks?{self.session_access_token}"
-        response = requests.post(url)
-        print(response.status_code)
+       
+        data = {
+            "songs": ','.join(map(str, track_ids))
+        }
+
+        url = f"http://api.deezer.com/playlist/{playlist_id}/tracks?{self.get_session_access_token()}"
+     
+        # data = {"songs": track_ids, "order": track_ids}
+        
+        response = requests.post(url, data=data)
         print(response.text)
         if response.status_code == 200:
-            print(f"Added track to the playlist")
+            print(f"Added tracks to the playlist")
         else:
-            print(f"Failed to add track to the playlist")
-            
+            print(f"Failed to add tracks to the playlist")
+            print(response.text)
+    
+    def get_track_ids(self, tracks):
+        track_ids = []
+        for track in tracks:
+            name = track.name
+            artists = track.artists
+            track_id = self.search_track(name=name, artists_names=artists)
+            if track_id and track_id not in track_ids:
+                track_ids.append(track_id)
+        return track_ids
+    
     def add_track_id_to_playlist(self, playlist_id, track_id):
     
-        url = f"http://api.deezer.com/playlist/{playlist_id}/tracks?{self.session_access_token}&songs={track_id}"
-        # url = f"http://api.deezer.com/playlist/{playlist_id}/tracks?{self.session_access_token}"
+        url = f"http://api.deezer.com/playlist/{playlist_id}/tracks?{self.get_session_access_token()}&songs={track_id}"
+        # url = f"http://api.deezer.com/playlist/{playlist_id}/tracks?{self.get_session_access_token()}"
         
         response = requests.post(url)
         print(response.text)
@@ -179,7 +238,7 @@ class DeezerClient:
     
     
     def get_track(self, track_id):
-        url = f"https://api.deezer.com/track/{track_id}?{self.session_access_token}"
+        url = f"https://api.deezer.com/track/{track_id}?{self.get_session_access_token()}"
         response = requests.get(url)
         if response.status_code == 200:
             track_data = response.json()
@@ -193,7 +252,7 @@ class DeezerClient:
 
     
     def remove_track_from_playlist(self, playlist_id, track_id):
-        url = f"https://api.deezer.com/playlist/{playlist_id}/tracks?{self.session_access_token}&songs={track_id}"
+        url = f"https://api.deezer.com/playlist/{playlist_id}/tracks?{self.get_session_access_token()}&songs={track_id}"
         response = requests.delete(url)
         print("*" * 30)
         print(response.text)
@@ -201,7 +260,7 @@ class DeezerClient:
         print("*" * 30)
     
     def search_for_tracks_with_name(self, name):
-        url = f"https://api.deezer.com/search/track?q={name}&{self.session_access_token}"
+        url = f"https://api.deezer.com/search/track?q={name}&{self.get_session_access_token()}"
         tracks = []
         response = requests.get(url)
         if response.status_code == 200:
@@ -216,57 +275,169 @@ class DeezerClient:
             print(f"Error while fething search results: {response.status_code}")
         
         return tracks
+    
+    def get_playlist_info(self, playlist_id):
+        print(playlist_id)
+        url = f"https://api.deezer.com/playlist/{playlist_id}?{self.get_session_access_token()}"
+        response = requests.get(url)
+        print(response.text)
+        if response.status_code == 200:
+            playlist_data = response.json()
+            id = playlist_data["id"]
+            title = playlist_data["title"]
+            img = playlist_data["picture_big"]
+            number_of_tracks = playlist_data["nb_tracks"]
+            return Playlist(id=id, image_url=img, name=title, number_of_tracks=number_of_tracks)
+        else:
+            print(f"Error while fething search results: {response.status_code}")
+
+    # def find_track_by_name_artist(self, name, artists_names):
+    #     str_artists = ""
+    #     print(f"str_artists: {str_artists}")
         
-        
-    def find_track_by_name_artist(self, name, artists_names):
-        str_artists = ""
-        print(f"str_artists: {str_artists}")
-        
-        for b in artists_names:
-            str_artists += ","
-            str_artists += b
+    #     for b in artists_names:
+    #         str_artists += ","
+    #         str_artists += b
             
             
-        endpoint = f"https://api.deezer.com/search/track?q={str_artists}-{name}"
+    #     endpoint = f"https://api.deezer.com/search/track?q={str_artists}-{name}"
+    #     response = requests.get(endpoint)
+    #     print(endpoint)
+    #     print(response.text)
+    #     if response.status_code == 200:
+    #         song_data = response.json()
+    #         if song_data["data"] == []:
+    #             splited = name.split("-")
+    #             new_name = splited[0]
+    #             endpoint = f"https://api.deezer.com/search/track?q={new_name}"
+    #             print(endpoint)
+    #             response = requests.get(endpoint)
+    #             if response.status_code == 200:
+    #                 song_data = response.json()
+    #                 for song in song_data["data"]:
+    #                     title = song["title"]
+    #                     print(new_name)
+    #                     print(title.lower())
+    #                     print(new_name.lower().strip() in title.lower().strip())
+    #                     if new_name.lower().strip() in title.lower().strip():
+    #                         song_id = song["id"]
+    #                         print(f"Id = {song_id}")
+    #                         return song_id
+    #         else:
+    #             for song in song_data["data"]:
+    #                 title = song["title"]
+    #                 print(name)
+    #                 print(title.lower())
+    #                 print(name.lower() in title.lower())
+    #                 if name.lower() in title.lower():
+    #                     song_id = song["id"]
+    #                     print(f"Id = {song_id}")
+    #                     return song_id
+    #     else:
+    #         print(f"Failed to find track with name {name}")
+        
+    def search_track(self, name, artists_names):
+        str_artists = ",".join(artists_names)
+        print(f"Searching for track: {name} by {str_artists}")
+        
+        song_id = self._search_track_by_name_and_artists(name, artists_names)
+        
+        if not song_id:
+            print(f"Failed to find track with name {name} by {str_artists}")
+        
+        return song_id
+    
+    @staticmethod
+    def _compare_names(name1, name2):
+        return name2.lower().strip() in name1.lower().strip()
+    
+    def _search_track_by_name_and_artists(self, name, artists_names):
+        endpoint = f"https://api.deezer.com/search/track?q={artists_names}-{name}"
+        response = requests.get(endpoint)
+        print(endpoint)
+
+        if response.status_code == 200:
+            song_data = response.json()
+            for song in song_data["data"]:
+                title = song["title"]
+                if self._compare_names(name, title):
+                    song_id = song["id"]
+                    print(f"Found track with name {name} by {artists_names}. Id = {song_id}")
+                    return song_id
+
+        return self._search_track_by_name(name, artists_names)
+
+    def _search_track_by_name(self, name, artists_names):
+        str_artists = ",".join(artists_names)
+        endpoint = f"https://api.deezer.com/search/track?q={name}-{str_artists}"
+        response = requests.get(endpoint)
+        print("_search_track_by_name")
+        if response.status_code == 200:
+            song_data = response.json()
+            for song in song_data["data"]:
+                title = song["title"]
+                if self._compare_names(name, title):
+                    song_id = song["id"]
+                    print(f"Found track with name {name}. Id = {song_id}")
+                    return song_id
+
+        return self._search_track_by_splited_name(name, artists_names)
+    
+    def _search_track_by_splited_name(self, name, artists_names):
+        print("_search_track_by_splited_name")
+        splited = name.split("-")
+        str_artists = ",".join(artists_names)
+        endpoint = f"https://api.deezer.com/search/track?q={splited[0]}-{str_artists}"
         response = requests.get(endpoint)
         print(endpoint)
         print(response.text)
         if response.status_code == 200:
             song_data = response.json()
-            # if song_data["data"] == []:
-            #     print("TTTUIUK")
-            #     splited = name.split("-")
-            #     new_name = splited[0]
-            #     endpoint = f"https://api.deezer.com/search/track?q={new_name}"
-            #     print(endpoint)
-            #     response = requests.get(endpoint)
-            #     # print(f"response={response.text}")
-            #     if response.status_code == 200:
-            #         song_data = response.json()
-            #         for song in song_data["data"]:
-            #             title = song["title"]
-            #             print(new_name)
-            #             print(title.lower())
-            #             print(new_name.lower().strip() in title.lower().strip())
-            #             if new_name.lower() in title.lower():
-            #                 song_id = song["id"]
-            #                 print(f"Id = {song_id}")
-            #                 return song_id
             for song in song_data["data"]:
                 title = song["title"]
-                print(name)
-                print(title.lower())
-                print(name.lower() in title.lower())
-                if name.lower() in title.lower():
+                print(self._compare_names(name, title))
+                if self._compare_names(name, title):
                     song_id = song["id"]
-                    print(f"Id = {song_id}")
+                    print(f"Found track with name {name}. Id = {song_id}")
                     return song_id
-        else:
-            print(f"Failed to find track with name {name}")
-        
+
+        return self._search_track_by_splited_spaces_name(name, artists_names)
     
+    def _search_track_by_splited_spaces_name(self, name, artists_names):
+        splited = name.split(" ")
+        str_artists = ",".join(artists_names)
+        endpoint = f"https://api.deezer.com/search/track?q={splited[0]}-{str_artists}"
+        response = requests.get(endpoint)
+        print(endpoint)
+        print(response.text)
+        if response.status_code == 200:
+            song_data = response.json()
+            for song in song_data["data"]:
+                title = song["title"]
+                print(self._compare_names(name, title))
+                if self._compare_names(name, title):
+                    song_id = song["id"]
+                    print(f"Found track with name {name}. Id = {song_id}")
+                    return song_id
+
+        return None
     
-    
+    def _search_track_by_name_and_artists(self, name, artists_names):
+        endpoint = f"https://api.deezer.com/search/track?q={artists_names}-{name}"
+        response = requests.get(endpoint)
+        print(endpoint)
+        print("_search_track_by_name_and_artists")
+
+        if response.status_code == 200:
+            song_data = response.json()
+            for song in song_data["data"]:
+                title = song["title"]
+                if self._compare_names(name, title):
+                    song_id = song["id"]
+                    print(f"Found track with name {name} by {artists_names}. Id = {song_id}")
+                    return song_id
+
+        return self._search_track_by_name(name, artists_names)
 #     def get_tracks(playlist_id, access_token):
 #     artist_song_dict = {}
 #     tracks = requests.get(f"https://api.deezer.com/playlist/{playlist_id}/tracks?access_token={access_token}")
