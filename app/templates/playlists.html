@@ -86,6 +86,13 @@ block content %}
             Unfollow
         </a>
 
+        <a
+            class="btn btn-warning"
+            href="{{ url_for('generate_token', playlist_id=playlist.id, playlist_name=playlist.name) }}""
+        >
+            Create Share URL
+        </a>
+
         <!-- Button trigger modal -->
         <a
             class="btn btn-warning"

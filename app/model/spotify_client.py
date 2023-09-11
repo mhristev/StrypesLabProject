@@ -1,8 +1,13 @@
+from collections import Counter
 import time
 import requests
 import json
 from .playlist import Playlist
 from .track import Track
+import sys
+import os
+from .user import User
+from .artist import Artist
 
 class SpotifyClient:
     def __init__(self, client_id, client_secret, redirect_uri, session_token_info=None):
@@ -11,11 +16,12 @@ class SpotifyClient:
         self.redirect_uri = redirect_uri
         self.session_token_info = session_token_info
         self.SPOTIFY_API_BASE_URL = 'https://api.spotify.com/v1/'
-        self.SPOTIPY_SCOPE = "user-library-read playlist-modify-public playlist-modify-private user-top-read"
+        self.SPOTIPY_SCOPE = "user-library-read playlist-modify-public playlist-modify-private user-top-read user-read-email user-read-private"
         self.SPOTIFY_AUTH_URL = 'https://accounts.spotify.com/authorize'
         self.SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'        
     
     def _get_headers(self):
+        print(self.session_token_info)
         access_token = self.session_token_info['access_token']
         headers = {"Authorization": f"Bearer {access_token}"}
         return headers
@@ -300,7 +306,114 @@ class SpotifyClient:
         else:
             print(f"Error: {response.status_code} while removing track from playlist!")
     
+    
+    def get_current_user_recommended_tracks(self):
+        headers = self._get_headers()
+        tracks = []
+        url = f"{self.SPOTIFY_API_BASE_URL}recommendations"
+        artists, genres_list = self.get_current_user_top_artists_genres()
+        all_genres = [genre for sublist in genres_list for genre in sublist]
+        # Count the occurrences of each genre
+        genre_counts = Counter(all_genres)
+
+        # Find the top 5 most common genres
+        top_5_genres = genre_counts.most_common(5)
+        artists_ids = []
+        for a in artists[:4]:
+            artists_ids.append(a.id)
+        str_artists = ",".join(artists_ids)
+        
+        res_genres = []
+        print(top_5_genres)
+        for g in top_5_genres:
+            res_genres.append(g[0])
+        
+        str_genres = ",".join(res_genres)
+        data = {
+            'limit': 10,
+            'seed_artists': str_artists,
+            'seed_genres': str_genres,
+            'seed_tracks':'0c6xIDDpzE81m2q797ordA'
+        }
+        print(str_artists)
+        print(str_genres)
+        
+        url = f"{self.SPOTIFY_API_BASE_URL}recommendations?seed_artists:{str_artists}&seed_genres={str_genres}&limit=10"
+        response = requests.get(url, headers=headers)
+        print(response.text)
+        if response.status_code == 200:
+            tracks_data = response.json()
+            for track in tracks_data["tracks"]:
+                track_name = track["name"]
+                artists = track["artists"]
+                artist_names = [artist["name"] for artist in artists]
+                image_url = track["album"]["images"][0]["url"] if track["album"]["images"] else None
+                uri = track["uri"]
+                id = track["id"]
+                tracks.append(Track(uri=uri, name=track_name, artists=artist_names, image_url=image_url, id=id))
+            return tracks
+        
+        
+        
+        
     def get_current_user(self):
+        print("TIKKKKKKKKK")
+        headers = self._get_headers()
+        
+        url = f"{self.SPOTIFY_API_BASE_URL}me"
+        
+        response = requests.get(url, headers=headers)
+        print(response.text)
+        if response.status_code == 200:
+            me_data = response.json()
+            display_name = me_data["display_name"]
+            email = me_data["email"]
+            id = me_data["id"]
+            print(display_name, email
+                  , id)
+            return User(display_name=display_name, id=id, email=email)
+            
+        # '''
+        #         {
+        #     "country": "string",
+        #     "display_name": "string",
+        #     "email": "string",
+        #     "explicit_content": {
+        #         "filter_enabled": false,
+        #         "filter_locked": false
+        #     },
+        #     "external_urls": {
+        #         "spotify": "string"
+        #     },
+        #     "followers": {
+        #         "href": "string",
+        #         "total": 0
+        #     },
+        #     "href": "string",
+        #     "id": "string",
+        #     "images": [
+        #         {
+        #         "url": "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
+        #         "height": 300,
+        #         "width": 300
+        #         }
+        #     ],
+        #     "product": "string",
+        #     "type": "string",
+        #     "uri": "string"
+        #     }
+        
+        # '''
+        
+        # if response.status_code == 200: 
+        #     print("Successfully fetched current user information!")
+        #     return response.json()
+        # else:
+        #     print("Error while fetching current user information!")
+        pass
+    
+    
+    # def get_current_user(self):
         # token = session[TOKEN_INFO]['access_token']
         # st = f"Bearer {token}"
         # headers = {"Authorization": st}
@@ -345,7 +458,7 @@ class SpotifyClient:
         #     return response.json()
         # else:
         #     print("Error while fetching current user information!")
-        pass
+        # pass
     
     def refresh_token_if_needed(self):
         token_info = self.session_token_info
@@ -370,20 +483,24 @@ class SpotifyClient:
         response = requests.post(self.SPOTIFY_TOKEN_URL, data=data)
         return response.json()
     
-    def get_current_user_top_artists(self):
+    def get_current_user_top_artists_genres(self):
         t = "artists"
         headers = self._get_headers()
         url = f"{self.SPOTIFY_API_BASE_URL}me/top/{t}"
         response = requests.get(url, headers=headers)
-        names = []
+        artists = []
         genres = [] 
         if response.status_code == 200:
             artists_data = response.json()
             for item in artists_data["items"]:
-                names.append(item["name"])
+                img = item["images"][0]["url"] if item["images"] else "https://e-cdns-images.dzcdn.net/images/cover//500x500-000000-80-0-0.jpg"
+                id = item["id"]
+                name = item["name"]
+                uri = item["uri"]
+                artists.append(Artist(id=id, image_url=img, name=name, uri=uri))
                 genres.append(item["genres"])
         
-        return names, genres
+        return artists, genres
     
     # def get_token(self,):
     #     token_info = self.session_token_info

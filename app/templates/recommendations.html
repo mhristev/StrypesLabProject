@@ -3,16 +3,24 @@ block content %}
 <h1>Hello, {{ current_user.display_name }}</h1>
 <div class="row justify-content-center">
     <div class="col-md-6">
-        <h3>Top artists in Spotify</h3>
-        {% for artist in artists %}
-        <p>{{artist.name}}</p>
+        <h3>Recommended from Deezer</h3>
+        {% for track in dz_tracks %}
+        <p>{{ track.name }}</p>
+        <p>{{ track.artists }}</p>
         {% endfor %}
     </div>
     <div class="col-md-6">
+        <h3>Recommended from Spotify</h3>
+        {% for track in sp_tracks %}
+        <p>{{ track.name }}</p>
+        <p>{{ track.artists }}</p>
+        {% endfor %}
+    </div>
+    <!-- <div class="col-md-6">
         <h3>Top genres in Spotify</h3>
         {% for genre, count in genres %}
         <p>{{genre}}</p>
         {% endfor %}
-    </div>
+    </div> -->
 </div>
 {% endblock %}

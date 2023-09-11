@@ -5,8 +5,17 @@ from model.deezer_client import DeezerClient
 import time
 from functools import wraps
 from collections import Counter
-
-app = Flask(__name__)
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import func
+from werkzeug.security import generate_password_hash
+from flask_login import LoginManager
+import uuid
+from flask_login import login_user, login_required, logout_user, current_user
+from model.user import User
+from model.playlist import Playlist
+from model.track import Track
+from model.user import db
+import secrets
 
 TOKEN_INFO_SPOTIFY = 'token_info_spotify'
 TOKEN_INFO_DEEZER = 'token_info_deezer'
@@ -19,6 +28,46 @@ DEEZER_APP_ID = os.getenv("DEEZER_APP_ID")
 DEEZER_CLIENT_SECRET = os.getenv("DEEZER_CLIENT_SECRET")
 DEEZER_REDIRECT_URI = os.getenv("DEEZER_REDIRECT_URI")
 
+basedir = os.path.abspath(os.path.dirname(__file__))
+app = Flask(__name__)
+
+login_manager = LoginManager(app)
+
+app.config['SQLALCHEMY_DATABASE_URI'] =\
+        'sqlite:///' + os.path.join(basedir, 'database.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db.init_app(app)
+app.app_context().push()
+db.create_all()
+
+     
+
+@login_manager.user_loader
+def get_user(id):
+    print("VALIDATION")
+    user = User.query.filter_by(id=id).first()
+    print(user.email, user.display_name)
+    print(id)
+    # Retrieve the user from your database using the user_id
+    return User.query.filter_by(id=id).first()
+
+
+# @app.before_first_request
+# def create_database():
+
+
+
+@login_manager.unauthorized_handler
+def unauthorized():
+    return redirect(url_for('login'))
+
+
+def test():
+    user = User(display_name="testname", email="email", password="password")
+    db.session.add(user)
+    db.session.commit()
+        
 
 def requires_auth(f):
     @wraps(f)
@@ -63,8 +112,44 @@ def index():
     if token_spotify == None and token_deezer == None:
         return render_template("login.html")
     
+    # if current_user.is_authenticated == False:
+    #     test = User.query.first()
+    #     login_user(test)
+    #     print('AAAAA')
+    #     print(current_user.id)
+    #     print('AAAAA')  
+    return redirect(url_for('playlists'))
+    # return render_template("base.html")
+
+
+@app.route('/generate_token', methods=['GET', 'POST'])
+def generate_token():
+    playlist_id = request.args.get('playlist_id')
+    playlist_name = request.args.get('playlist_name')
+    token_info_spotify = session.get(TOKEN_INFO_SPOTIFY)
+    # Check if playlist_id and playlist_name are provided
+    if not playlist_id or not playlist_name:
+        return redirect(url_for('index'))
     
-    return render_template("base.html")
+    token = secrets.token_urlsafe(16)
+    spotify_client = get_spotify_client(token_info_spotify)
+    
+    tracks = spotify_client.get_tracks_in_playlist(playlist_id)
+    
+    playlist = Playlist(name=playlist_name)
+    db.session.add(playlist)
+    
+    for track in tracks:
+        song = Track(title=track.name, artist=track.artists, playlist=playlist)
+        db.session.add(song)
+     
+        # # Create and save the token
+        # token_obj = Token(token=token, playlist=playlist)
+        # db.session.add(token_obj)
+        
+        # db.session.commit()
+        # flash('Playlist and token generated successfully!')
+    return "sa"
 
 
 @app.route('/login')
@@ -73,8 +158,10 @@ def login():
 
 @app.route('/auth_spotify')
 def auth_spotify():
+    print("TUK")
     spotify_client = get_spotify_client(session_token_info=None)
     auth_url = spotify_client.login()
+    print(auth_url)
     return redirect(auth_url)
 
 @app.route('/auth_deezer')
@@ -100,8 +187,32 @@ def redirect_page():
     code = request.args.get('code')
     spotify_client = get_spotify_client(session_token_info=None)
     token_info = spotify_client.exchange_code_for_token(code)
-    session[TOKEN_INFO_SPOTIFY] = token_info
-    return redirect(url_for('playlists'))
+    print("BROOOOOO")
+    if token_info:
+        print("AAAAAA")
+        spotify_client = get_spotify_client(session_token_info=token_info)
+        user = spotify_client.get_current_user()
+        print(user.email)
+        user_db = User.query.filter_by(email=user.email).first()
+        print(user_db.email)
+        if user_db is None:
+            user_db = User(email=user.email, display_name=user.display_name, id=user.id)
+            db.session.add(user_db)
+            db.session.commit()
+        
+        login_user(user_db)
+        
+        session[TOKEN_INFO_SPOTIFY] = token_info
+        return redirect(url_for('playlists'))
+    else:
+        return "Failed to retrieve access token."
+
+@app.route('/test', methods=['GET'])
+def test():
+    # logout_user()
+
+    return str(current_user.is_authenticated)
+
 
 @app.route('/create_playlist', methods=['POST'])
 def create_playlist():
@@ -161,29 +272,49 @@ def logout():
     # Clear the authentication tokens from the session when the user logs out
     session.pop(TOKEN_INFO_SPOTIFY, None)
     session.pop(TOKEN_INFO_DEEZER, None)
+    logout_user()
     return redirect(url_for('login'))
 
 
 @app.route('/profile')
-@requires_auth
+# @requires_auth
+@login_required
 def profile():
+    
     token_info_spotify = session.get(TOKEN_INFO_SPOTIFY)
     spotify_client = get_spotify_client(session_token_info=token_info_spotify)
-    names, genres_list = spotify_client.get_current_user_top_artists()
-    print(names)
-    print(genres_list)
+    artists, genres_list = spotify_client.get_current_user_top_artists_genres()
     all_genres = [genre for sublist in genres_list for genre in sublist]
     # Count the occurrences of each genre
     genre_counts = Counter(all_genres)
 
     # Find the top 5 most common genres
     top_3_genres = genre_counts.most_common(5)
-    return render_template('profile.html', names=names, genres=top_3_genres)
+    return render_template('profile.html', artists=artists, genres=top_3_genres)
+
+
+@app.route('/recommendations')
+@login_required
+def recommendations():
+    check_for_expired_tokens()
+    token_info_deezer = session.get(TOKEN_INFO_DEEZER)
+    token_info_spotify = session.get(TOKEN_INFO_SPOTIFY)
+  
+    deezer_client = get_deezer_client(token_info_deezer)
+    dz_tracks = deezer_client.get_current_user_recommended_tracks()
+
+    spotify_client = get_spotify_client(token_info_spotify)
+    sp_tracks = spotify_client.get_current_user_recommended_tracks()
+    
+    
+    
+    return render_template("recommendations.html", sp_tracks=sp_tracks, dz_tracks=dz_tracks)
 
 
 @app.route('/playlists')
-@requires_auth
+@login_required
 def playlists():
+    print(session.get(TOKEN_INFO_DEEZER))
     check_for_expired_tokens()
     token_info_spotify = session.get(TOKEN_INFO_SPOTIFY)
     token_info_deezer = session.get(TOKEN_INFO_DEEZER)
@@ -191,8 +322,8 @@ def playlists():
     spotify_playlists = None
     deezer_playlists = None
     
-    print("IN HERE")
-    print(token_info_deezer)
+    # print("IN HERE")
+    # print(token_info_deezer)
     # now = int(time.time())
     # is_expired = int(token_info_deezer.split("expires=")[1]) - now < 60
     # print(token_info_deezer)

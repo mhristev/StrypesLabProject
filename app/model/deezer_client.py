@@ -1,38 +1,7 @@
-# from requests_oauthlib import OAuth2Session
-# import requests
-
-# class DeezerClient:
-#     def __init__(self, app_id, client_secret, redirect_uri):
-#         self.app_id = app_id
-#         self.client_secret = client_secret
-#         self.redirect_uri = redirect_uri
-#         self.authorization_base_url = f'https://connect.deezer.com/oauth/auth.php?app_id={app_id}&redirect_uri={redirect_uri}&perms=manage_library,delete_library'
-#         self.token_url = 'https://connect.deezer.com/oauth/access_token.php'
-
-#     def authorization_url(self):
-#         deezer = OAuth2Session(self.app_id, redirect_uri=self.redirect_uri)
-#         authorization_url, state = deezer.authorization_url(self.authorization_base_url)
-#         return authorization_url
-
-#     def exchange_code_for_token(self, code):
-#         data = {
-#             'app_id': self.app_id,
-#             'secret': self.client_secret,
-#             'code': code,
-#         }
-#         response = requests.post(self.token_url, data=data)
-#         access_token = None
-#         if response.status_code == 200:
-#             access_token = response.text.split("=")[1]
-#         return access_token
-
-import os
 import requests
 from requests_oauthlib import OAuth2Session
 from .playlist import Playlist
 from .track import Track
-import json
-import time
 from datetime import datetime, timedelta
 
 class DeezerClient:
@@ -64,11 +33,32 @@ class DeezerClient:
             
         return current_time >= expiration_time
         
-        now = int(time.time())
-        print(self.session_token_info)
-        return int() - now < 60
-        
     
+    def convert_to_track(track_json):
+        artists_names = [track_json["artist"]["name"]]
+        track_name = track_json["title"]
+        id = track_json["id"]
+        img = track_json["album"]["cover_big"]
+        pass
+    
+    def get_current_user_recommended_tracks(self):
+        url = f"https://api.deezer.com/user/me/recommendations/tracks?{self.get_session_access_token()}"
+        response = requests.get(url)
+        tracks = []
+        print(response.text)
+        if response.status_code == 200:
+            tracks_data = response.json()
+            for t in tracks_data["data"]:
+                artists_names = [t["artist"]["name"]]
+                track_name = t["title"]
+                id = t["id"]
+                img = t["album"]["cover_big"]
+                tracks.append(Track(id=id, name=track_name, artists=artists_names, image_url=img, uri=None))    
+        
+        return tracks
+            
+        
+        pass
     def authorization_url(self):
         authorization_base_url = 'https://connect.deezer.com/oauth/auth.php'
         # params = {
