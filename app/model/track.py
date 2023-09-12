@@ -8,22 +8,14 @@ from .db_setup import db
 #         self.image_url = image_url
 
     
-playlist_track = db.Table(
-    'playlist_track',
-    db.Column('playlist_id', db.Integer, db.ForeignKey('playlist.id')),
-    db.Column('track_id', db.Integer, db.ForeignKey('track.id'))
-)
-
 class Track(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255))
-    uri = db.Column(db.String(255))
+    name = db.Column(db.String(255), nullable=False)
+    uri = db.Column(db.String(255), nullable=True)
     image_url = db.Column(db.String(255))
-    album_id = db.Column(db.Integer, db.ForeignKey('album.id'))
-    artists = db.relationship('Artist', secondary='track_artist', backref='tracks')
-    
-    playlists = db.relationship('Playlist', secondary=playlist_track, backref='tracks')
+    album_id = db.Column(db.Integer, db.ForeignKey('album.id'), nullable=False)
     album = db.relationship('Album', backref='tracks')
-    
+    artists = db.relationship('Artist', secondary='track_artist', back_populates='tracks')
+    playlists = db.relationship('Playlist', secondary='playlist_track', back_populates='tracks')
 
 

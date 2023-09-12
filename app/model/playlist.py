@@ -8,10 +8,13 @@ from .db_setup import db
 
 class Playlist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255))
+    name = db.Column(db.String(255), nullable=False)
     image_url = db.Column(db.String(255))
-    tracks = db.relationship('Track', backref='playlist')
     number_of_tracks = db.Column(db.Integer)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    tracks = db.relationship('Track', secondary='playlist_track', back_populates='playlists')
     
-    user = db.relationship('User', backref='playlists')
+playlist_track = db.Table(
+    'playlist_track',
+    db.Column('playlist_id', db.Integer, db.ForeignKey('playlist.id'), primary_key=True),
+    db.Column('track_id', db.Integer, db.ForeignKey('track.id'), primary_key=True)
+)

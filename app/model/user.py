@@ -6,7 +6,6 @@ class User(db.Model, UserMixin):
     id = db.Column(db.String(100), primary_key=True)
     display_name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(80), unique=True, nullable=False)
-    playlists = db.relationship('Playlist', backref='user')
     
     def __init__(self, id, display_name, email):
         self.id = id
@@ -22,6 +21,11 @@ class User(db.Model, UserMixin):
     def get_id(self):   
         return self.id
     
+# class User(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     display_name = db.Column(db.String(255), nullable=False)
+#     email = db.Column(db.String(255), nullable=False)
+
     
 # class Token(db.Model):
 #     id = db.Column(db.Integer, primary_key=True)

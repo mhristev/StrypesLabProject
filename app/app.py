@@ -1,7 +1,7 @@
 from flask import Flask, request, url_for, session, redirect, render_template, jsonify
 import os
-from model.spotify_client import SpotifyClient
-from model.deezer_client import DeezerClient
+from clients.spotify_client import SpotifyClient
+from clients.deezer_client import DeezerClient
 import time
 from functools import wraps
 from collections import Counter
@@ -11,9 +11,15 @@ from werkzeug.security import generate_password_hash
 from flask_login import LoginManager
 import uuid
 from flask_login import login_user, login_required, logout_user, current_user
-from model.user import User
-from model.playlist import Playlist
+
 from model.track import Track
+from model.artist import Artist
+from model.album import Album
+from model.playlist import Playlist
+from model.token import Token
+from model.user import User
+
+
 from model.user import db
 import secrets
 
@@ -46,9 +52,8 @@ db.create_all()
 @login_manager.user_loader
 def get_user(id):
     print("VALIDATION")
+    print(session.get(TOKEN_INFO_DEEZER))
     user = User.query.filter_by(id=id).first()
-    print(user.email, user.display_name)
-    print(id)
     # Retrieve the user from your database using the user_id
     return User.query.filter_by(id=id).first()
 
@@ -176,6 +181,14 @@ def callback():
     deezer_client = get_deezer_client(session_token_info=None)
     access_token = deezer_client.fetch_token(code)
     if access_token:
+        deezer_client = get_deezer_client(session_token_info=access_token)
+        user = deezer_client.get_current_user()
+        user_db = User.query.filter_by(email=user.email).first()
+        if user_db is None:
+            user_db = User(email=user.email, display_name=user.display_name, id=user.id)
+            db.session.add(user_db)
+            db.session.commit()
+        login_user(user_db)
         session[TOKEN_INFO_DEEZER] = access_token
         return redirect(url_for('playlists'))
     else:
@@ -187,14 +200,12 @@ def redirect_page():
     code = request.args.get('code')
     spotify_client = get_spotify_client(session_token_info=None)
     token_info = spotify_client.exchange_code_for_token(code)
-    print("BROOOOOO")
     if token_info:
-        print("AAAAAA")
         spotify_client = get_spotify_client(session_token_info=token_info)
         user = spotify_client.get_current_user()
-        print(user.email)
+      
         user_db = User.query.filter_by(email=user.email).first()
-        print(user_db.email)
+
         if user_db is None:
             user_db = User(email=user.email, display_name=user.display_name, id=user.id)
             db.session.add(user_db)

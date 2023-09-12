@@ -2,12 +2,12 @@ from collections import Counter
 import time
 import requests
 import json
-from .playlist import Playlist
-from .track import Track
-import sys
-import os
-from .user import User
-from .artist import Artist
+
+from model.album import Album
+from model.playlist import Playlist
+from model.track import Track
+from model.user import User
+from model.artist import Artist
 
 class SpotifyClient:
     def __init__(self, client_id, client_secret, redirect_uri, session_token_info=None):
@@ -41,6 +41,36 @@ class SpotifyClient:
         auth_url = f"{self.SPOTIFY_AUTH_URL}?client_id={self.client_id}&response_type=code&redirect_uri={self.redirect_uri}&scope={self.SPOTIPY_SCOPE}"
         return auth_url
 
+    def convert_to_track(self, track_json):
+        print("9" * 1000)
+        print(track_json)
+        print("9" * 1000)
+        
+        track_name = track_json["name"]
+        artists = track_json["artists"]
+        image_url = track_json["album"]["images"][0]["url"] if track_json["album"]["images"] else "https://e-cdns-images.dzcdn.net/images/cover//500x500-000000-80-0-0.jpg"
+        uri = track_json["uri"]
+        id = track_json["id"]
+        album_id = track_json["album"]["id"]
+        album_name = track_json["album"]["name"]
+        album = Album(id=album_id, name=album_name)
+        artists_list = []
+        print("7" * 1000)
+        for a in artists:
+            name = a["name"]
+            new_artist = Artist(name=name)
+            artists_list.append(new_artist)
+        return Track(id=id, name=track_name,uri=uri, image_url=image_url, album=album, artists=artists_list)
+    
+    
+    def convert_to_playlist(self, playlist_json):
+        id = playlist_json["id"]
+        image_url = playlist_json["images"][0]["url"] if playlist_json["images"] else "https://e-cdns-images.dzcdn.net/images/cover//500x500-000000-80-0-0.jpg"
+        name = playlist_json["name"]
+        nb_of_tracks = playlist_json["tracks"]["total"]
+        
+        return Playlist(id=id, name=name, number_of_tracks=nb_of_tracks, image_url=image_url)
+    
     def exchange_code_for_token(self, code):
         token_info = self._exchange_code_for_token(code)
         self.session_token_info = token_info
@@ -61,12 +91,8 @@ class SpotifyClient:
         if result.status_code == 200:
             playlists_data = result.json()
             for item in playlists_data["items"]:
-                id = item["id"]
-                image_url = item["images"][0]["url"] if item["images"] else "https://e-cdns-images.dzcdn.net/images/cover//500x500-000000-80-0-0.jpg"
-                name = item["name"]
-                nb_of_tracks = item["tracks"]["total"]
-                playlists.append(Playlist(id, image_url, name, nb_of_tracks))
-                # playlists[id] = {"image_url": image_url, "name": name, "number_of_tracks": nb_of_tracks}
+                playlist = self.convert_to_playlist(item)
+                playlists.append(playlist)
 
         return playlists
     
@@ -93,18 +119,15 @@ class SpotifyClient:
         }
         url = f"{self.SPOTIFY_API_BASE_URL}playlists/{playlist_id}/tracks"
         response = requests.get(url=url, params=params, headers=headers)
-        print(response.text)
+
         tracks = []
         if response.status_code == 200:
             tracks_data = response.json()
             for track in tracks_data["items"]:
-                track_name = track["track"]["name"]
-                artists = track["track"]["artists"]
-                artist_names = [artist["name"] for artist in artists]
-                image_url = track["track"]["album"]["images"][0]["url"] if track["track"]["album"]["images"] else None
-                uri = track["track"]["uri"]
-                id = track["track"]["id"]
-                tracks.append(Track(uri=uri, name=track_name, artists=artist_names, image_url=image_url, id=id))
+                single_track = track["track"]
+                print(single_track)
+                new_track = self.convert_to_track(single_track)
+                tracks.append(new_track)
             return tracks
     
     def get_current_user_id(self):
@@ -156,11 +179,8 @@ class SpotifyClient:
         
         if response.status_code == 200:
             playlist_data = response.json()
-            id = playlist_data["id"]
-            name = playlist_data["name"]
-            img = playlist_data["images"][0]["url"] if playlist_data["images"] else "https://e-cdns-images.dzcdn.net/images/cover//500x500-000000-80-0-0.jpg"
-            nb_of_tracks = playlist_data["tracks"]["total"]
-            return Playlist(id=id, image_url=img, name=name, number_of_tracks=nb_of_tracks)
+            playlist = self.convert_to_playlist(playlist_data)
+            return playlist
     
     def get_track(self, track_uri):
         track_id = track_uri.split(":")[2]
@@ -171,14 +191,8 @@ class SpotifyClient:
         # print(response.text)
         if response.status_code == 200:
             track_data = response.json()
-            id = track_data["id"]
-            name = track_data["name"]
-            artists_names = []
-            for artist in track_data["artists"]:
-                artists_names.append(artist["name"])
-            uri = track_data["uri"]
-            image_url = track_data["album"]["images"][-1]["url"]
-            return Track(id=id, name=name, artists=artists_names, uri=uri, image_url=image_url)
+            new_track = self.convert_to_track(track_data)
+            return new_track
         else:
             print(f"Error whole getting track data {response.status_code}")
         
@@ -251,13 +265,8 @@ class SpotifyClient:
                 for track in tracks:
                     track_name = track["name"]
                     if track_name.lower() in name.lower():
-                        artists_names = []
-                        for artist in track["artists"]:
-                            artists_names.append(artist["name"])
-                        uri = track["uri"]
-                        id = track["id"]
-                        image_url = track["album"]["images"][-1]["url"]
-                        tracks.append(Track(name=track_name, artists=artists_names, uri=uri, image_url=image_url, id=id))
+                        new_track = self.convert_to_track(track)
+                        tracks.append(new_track)
                         break
         return tracks
     
@@ -268,21 +277,13 @@ class SpotifyClient:
         url = f"{self.SPOTIFY_API_BASE_URL}search?q={name}&type=track&offset=0&limit=10"
 
         response = requests.get(url, headers=headers)
-        print(f"response: {response.status_code}")
+
         if response.status_code == 200:
             songs_data = response.json()
             tracks = songs_data.get("tracks", {}).get("items", [])
             for track in tracks:
-                print(track)
-                print("9" * 1000)
-                track_name = track["name"]
-                artists_names = []
-                for artist in track["artists"]:
-                    artists_names.append(artist["name"])
-                uri = track["uri"]
-                id = track["id"]
-                image_url = track["album"]["images"][-1]["url"]
-                found_tracks.append(Track(name=track_name, artists=artists_names, uri=uri, image_url=image_url, id=id))
+                new_track = self.convert_to_track(track)
+                found_tracks.append(new_track)
         
         return found_tracks
     
@@ -344,33 +345,21 @@ class SpotifyClient:
         if response.status_code == 200:
             tracks_data = response.json()
             for track in tracks_data["tracks"]:
-                track_name = track["name"]
-                artists = track["artists"]
-                artist_names = [artist["name"] for artist in artists]
-                image_url = track["album"]["images"][0]["url"] if track["album"]["images"] else None
-                uri = track["uri"]
-                id = track["id"]
-                tracks.append(Track(uri=uri, name=track_name, artists=artist_names, image_url=image_url, id=id))
+                new_track = self.convert_to_track(track)
+                tracks.append(new_track)
             return tracks
         
-        
-        
-        
     def get_current_user(self):
-        print("TIKKKKKKKKK")
         headers = self._get_headers()
         
         url = f"{self.SPOTIFY_API_BASE_URL}me"
         
         response = requests.get(url, headers=headers)
-        print(response.text)
         if response.status_code == 200:
             me_data = response.json()
             display_name = me_data["display_name"]
             email = me_data["email"]
             id = me_data["id"]
-            print(display_name, email
-                  , id)
             return User(display_name=display_name, id=id, email=email)
             
         # '''
@@ -493,11 +482,10 @@ class SpotifyClient:
         if response.status_code == 200:
             artists_data = response.json()
             for item in artists_data["items"]:
-                img = item["images"][0]["url"] if item["images"] else "https://e-cdns-images.dzcdn.net/images/cover//500x500-000000-80-0-0.jpg"
                 id = item["id"]
                 name = item["name"]
                 uri = item["uri"]
-                artists.append(Artist(id=id, image_url=img, name=name, uri=uri))
+                artists.append(Artist(id=id, name=name, uri=uri))
                 genres.append(item["genres"])
         
         return artists, genres

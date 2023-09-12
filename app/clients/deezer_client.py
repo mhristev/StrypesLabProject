@@ -1,7 +1,10 @@
 import requests
 from requests_oauthlib import OAuth2Session
-from .playlist import Playlist
-from .track import Track
+from model.user import User
+from model.album import Album
+from model.artist import Artist
+from model.playlist import Playlist
+from model.track import Track
 from datetime import datetime, timedelta
 
 class DeezerClient:
@@ -12,12 +15,8 @@ class DeezerClient:
         self.session_token_info = session_token_info
         print("CONSTRCUTOE")
         print(session_token_info)
-
     
     def get_session_access_token(self):
-        # access_token = self.session_token_info['access_token']
-        # print(self.session_token_info)
-        #access_token=frJgbQbpRDGiqRSb4A9Lmfk1SteOEEVncm6SaWnG1nZ2qgR8lzP&expires=781
         return self.session_token_info
     
     def is_token_expired(self):
@@ -33,13 +32,29 @@ class DeezerClient:
             
         return current_time >= expiration_time
         
+    def convert_to_playlist(self, playlist_json):
+        id = playlist_json["id"]
+        name = playlist_json["title"]
+        img = playlist_json["picture_big"]
+        number_of_tracks = playlist_json["nb_tracks"]
+        
+        return Playlist(id=id, name=name, number_of_tracks=number_of_tracks, image_url=img)
     
-    def convert_to_track(track_json):
-        artists_names = [track_json["artist"]["name"]]
+    def convert_to_track(self, track_json):
+        artist_id = track_json["artist"]["id"]
+        artist_name = track_json["artist"]["name"]
+        artist_uri = None
+        artist = Artist(id=artist_id, name=artist_name, uri=artist_uri)
+        
+        album_name = track_json["album"]["title"]
+        album_id = track_json["album"]["id"]
+        
+        album = Album(id=album_id, name=album_name)
+        
         track_name = track_json["title"]
         id = track_json["id"]
         img = track_json["album"]["cover_big"]
-        pass
+        return Track(id=id, name=track_name, uri=None, image_url=img, album=album, artists=[artist])
     
     def get_current_user_recommended_tracks(self):
         url = f"https://api.deezer.com/user/me/recommendations/tracks?{self.get_session_access_token()}"
@@ -49,27 +64,33 @@ class DeezerClient:
         if response.status_code == 200:
             tracks_data = response.json()
             for t in tracks_data["data"]:
-                artists_names = [t["artist"]["name"]]
-                track_name = t["title"]
-                id = t["id"]
-                img = t["album"]["cover_big"]
-                tracks.append(Track(id=id, name=track_name, artists=artists_names, image_url=img, uri=None))    
+                new_track = self.convert_to_track(t)
+                tracks.append(new_track)    
         
         return tracks
-            
+
+    def get_current_user(self):
+        url = f"https://api.deezer.com/user/me?{self.get_session_access_token()}"
+        response = requests.get(url)
         
-        pass
+        me_data = response.json()
+        display_name = me_data["name"]
+        id = me_data["id"]
+        email = me_data["email"]
+        return User(display_name=display_name, id=id, email=email)
+    
     def authorization_url(self):
         authorization_base_url = 'https://connect.deezer.com/oauth/auth.php'
+        
+        return f"https://connect.deezer.com/oauth/auth.php?app_id={self.app_id}&redirect_uri={self.redirect_uri}&perms=basic_access,manage_library,delete_library,email"
         # params = {
         #     'app_id': self.app_id,
-        #     'redirect_uri': self.redirect_uri,
-        #     'perms': 'manage_library,delete_library',
+        #     'redirect_uri': self.redirect_uri,  
+        #     'perms': 'manage_library delete_library email',
         # }
-        deezer = OAuth2Session(self.app_id, redirect_uri=self.redirect_uri)
-        auth_url, state =  deezer.authorization_url(authorization_base_url)
-        print(auth_url)
-        return auth_url
+        # deezer = OAuth2Session(self.app_id, redirect_uri=self.redirect_uri)
+        # auth_url, state =  deezer.authorization_url(authorization_base_url, params)
+        # return auth_url
 
     def fetch_token(self, code):
         token_url = 'https://connect.deezer.com/oauth/access_token.php'
@@ -92,13 +113,9 @@ class DeezerClient:
         playlists = []
         if response.status_code == 200:
             playlists_data = response.json()
-            print(playlists_data)
             for playlist in playlists_data["data"]:
-                title = playlist["title"]
-                picture = playlist["picture_big"]
-                number_of_tracks = playlist["nb_tracks"]
-                id = playlist["id"]
-                playlists.append(Playlist(id=id, image_url=picture, name=title, number_of_tracks=number_of_tracks))
+                new_playlist = self.convert_to_playlist(playlist)
+                playlists.append(new_playlist)
             return playlists
         else:
             print(f"Request for getting playlists failed with status code: {response.status_code}")
@@ -111,15 +128,11 @@ class DeezerClient:
             tracks_data = response.json()
             # print(tracks_data)
             for t in tracks_data["data"]:
-                artists_names = [t["artist"]["name"]]
-                track_name = t["title"]
-                id = t["id"]
-                img = t["album"]["cover_big"]
-                tracks.append(Track(id=id, name=track_name, artists=artists_names, image_url=img, uri=None))
+                new_track = self.convert_to_track(t)
+                tracks.append(new_track)
         else:
             print('Error in get tracks')
-        for t in tracks:
-            print(t.name)
+        
         return tracks
 
     def get_user_id(self):
@@ -232,22 +245,15 @@ class DeezerClient:
         response = requests.get(url)
         if response.status_code == 200:
             track_data = response.json()
-            name = track_data["title"]
-            id = track_data["id"]
-            artist_name = track_data["artist"]["name"]
-            img = track_data["album"]["cover_big"]
-            return Track(id=id, name=name, artists=[artist_name], uri=None, image_url=img)
+            new_track = self.convert_to_track(track_data)
+            return new_track
         else:
             print(f"Error while getting track {response.status_code}")
 
-    
     def remove_track_from_playlist(self, playlist_id, track_id):
         url = f"https://api.deezer.com/playlist/{playlist_id}/tracks?{self.get_session_access_token()}&songs={track_id}"
         response = requests.delete(url)
-        print("*" * 30)
-        print(response.text)
         print(response.status_code)
-        print("*" * 30)
     
     def search_for_tracks_with_name(self, name):
         url = f"https://api.deezer.com/search/track?q={name}&{self.get_session_access_token()}"
@@ -256,15 +262,14 @@ class DeezerClient:
         if response.status_code == 200:
             tracks_data = response.json()
             for song in tracks_data["data"]:
-                name = song["title"]
-                id = song["id"]
-                artist_name = song["artist"]["name"]
-                img = song["album"]["cover_big"]
-                tracks.append(Track(id=id, name=name, artists=[artist_name], uri=None, image_url=img))
+                new_track = self.convert_to_track(song)
+                tracks.append(new_track)
         else:
             print(f"Error while fething search results: {response.status_code}")
         
         return tracks
+    
+
     
     def get_playlist_info(self, playlist_id):
         print(playlist_id)
@@ -273,11 +278,8 @@ class DeezerClient:
         print(response.text)
         if response.status_code == 200:
             playlist_data = response.json()
-            id = playlist_data["id"]
-            title = playlist_data["title"]
-            img = playlist_data["picture_big"]
-            number_of_tracks = playlist_data["nb_tracks"]
-            return Playlist(id=id, image_url=img, name=title, number_of_tracks=number_of_tracks)
+            playlist = self.convert_to_playlist(playlist_data)
+            return playlist
         else:
             print(f"Error while fething search results: {response.status_code}")
 
