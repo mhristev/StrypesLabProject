@@ -1,5 +1,6 @@
 from collections import Counter
 import time
+import uuid
 import requests
 import json
 
@@ -42,10 +43,6 @@ class SpotifyClient:
         return auth_url
 
     def convert_to_track(self, track_json):
-        print("9" * 1000)
-        print(track_json)
-        print("9" * 1000)
-        
         track_name = track_json["name"]
         artists = track_json["artists"]
         image_url = track_json["album"]["images"][0]["url"] if track_json["album"]["images"] else "https://e-cdns-images.dzcdn.net/images/cover//500x500-000000-80-0-0.jpg"
@@ -55,13 +52,19 @@ class SpotifyClient:
         album_name = track_json["album"]["name"]
         album = Album(id=album_id, name=album_name)
         artists_list = []
-        print("7" * 1000)
+
         for a in artists:
+            id = str(uuid.uuid4())
             name = a["name"]
-            new_artist = Artist(name=name)
+            new_artist = Artist(name=name, id=id)
             artists_list.append(new_artist)
+        print("E" * 1000)
+        print(uri, image_url)
+        print("E" * 1000)
         return Track(id=id, name=track_name,uri=uri, image_url=image_url, album=album, artists=artists_list)
     
+    
+
     
     def convert_to_playlist(self, playlist_json):
         id = playlist_json["id"]
@@ -125,7 +128,8 @@ class SpotifyClient:
             tracks_data = response.json()
             for track in tracks_data["items"]:
                 single_track = track["track"]
-                print(single_track)
+                # print("9" * 2000)
+                # print(single_track)
                 new_track = self.convert_to_track(single_track)
                 tracks.append(new_track)
             return tracks
@@ -196,29 +200,87 @@ class SpotifyClient:
         else:
             print(f"Error whole getting track data {response.status_code}")
         
-    def search_track(self, name, artists_names):
+    def search_track(self, name, artists_names, album_name=None):
         headers = self._get_headers()
-        str_artists = ",".join(artists_names)
+        str_artists = " ".join(artists_names)
+        # url_name = name.replace(" ", "%20")
+        artists_query = "".join([f"artist:{artist}" for artist in artists_names])
+        # artists_url = artists_url.replace(" ", "%20")
 
-        url = f"{self.SPOTIFY_API_BASE_URL}search?q={name}artist:{str_artists}&type=track&offset=0&limit=5"
+        url = f"{self.SPOTIFY_API_BASE_URL}search?q={name}{artists_query}&type=track&offset=0&limit=5"
+        
         response = requests.get(url, headers=headers)
-
+        if name == "My Favorite Part" or name == "The Spins":
+            print(url)
+            print(response.text)
+            
         if response.status_code == 200:
             songs_data = response.json()
             tracks = songs_data.get("tracks", {}).get("items", [])
             for track in tracks:
                 track_name = track["name"]
-                if track_name.lower().strip() in name.lower().strip() or name.lower().strip() in track_name.lower().strip():
+                artists = track["artists"]
+                a_names = []
+                for a in artists:
+                    a_n = a["name"]
+                    a_names.append(a_n)
+
+                if (track_name.lower().strip() in name.lower().strip() or name.lower().strip() in track_name.lower().strip()) and (a_names[0] in artists_names) :
                     uri = track["uri"]
                     return uri
-
+        return self.search_track_with_name_separator(name, artists_names, album_name)
     
+    
+    def search_track_with_name_separator(self, name, artists_names, album_name):
+        headers = self._get_headers()
+        artists_query = "".join([f"artist:{artist}" for artist in artists_names])
+        url = f"{self.SPOTIFY_API_BASE_URL}search?q={name}_{artists_query}&type=track&offset=0&limit=5"
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            songs_data = response.json()
+            tracks = songs_data.get("tracks", {}).get("items", [])
+            for track in tracks:
+                track_name = track["name"]
+                artists = track["artists"]
+                a_names = []
+                for a in artists:
+                    a_n = a["name"]
+                    a_names.append(a_n)
+
+                if (track_name.lower().strip() in name.lower().strip() or name.lower().strip() in track_name.lower().strip()) and (a_names[0] in artists_names) :
+                    uri = track["uri"]
+                    return uri
+        
+        return self.search_track_and_with_album(name, artists_names, album_name)
+    
+    def search_track_and_with_album(self, name, artists_names, album_name):
+        headers = self._get_headers()
+        artists_query = "".join([f"artist:{artist}" for artist in artists_names])
+        url = f"{self.SPOTIFY_API_BASE_URL}search?q={name}_{artists_query}album:{album_name.lower()}&type=track&offset=0&limit=5"
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            songs_data = response.json()
+            tracks = songs_data.get("tracks", {}).get("items", [])
+            for track in tracks:
+                track_name = track["name"]
+                artists = track["artists"]
+                a_names = []
+                for a in artists:
+                    a_n = a["name"]
+                    a_names.append(a_n)
+
+                if (track_name.lower().strip() in name.lower().strip() or name.lower().strip() in track_name.lower().strip()) and (a_names[0] in artists_names) :
+                    uri = track["uri"]
+                    return uri
+        
+         
     def get_tracks_uri(self, tracks):
         track_uris = []
         for track in tracks:
             name = track.name
             artists = track.artists
-            track_uri = self.search_track(name=name, artists_names=artists)
+            artists_names = [artist.name for artist in artists]
+            track_uri = self.search_track(name=name, artists_names=artists_names, album_name=track.album.name)
             if track_uri and track_uri not in track_uris:
                 track_uris.append(track_uri)
         return track_uris
@@ -226,7 +288,10 @@ class SpotifyClient:
     
     def add_tracks_to_playlist(self, tracks, playlist_id):
         headers = self._get_headers()
-        
+        print("AAAAAA")
+        for track in tracks:
+            print(track.uri)
+        print("AAAAAA")
         track_uris = self.get_tracks_uri(tracks)
         print(track_uris)
         data = {
@@ -272,7 +337,7 @@ class SpotifyClient:
     
     def search_for_tracks_with_name(self, name):
         found_tracks = []
-        
+        print("heyyyyyy")
         headers = self._get_headers()
         url = f"{self.SPOTIFY_API_BASE_URL}search?q={name}&type=track&offset=0&limit=10"
 

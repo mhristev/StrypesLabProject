@@ -1,3 +1,4 @@
+from curses import flash
 from flask import Flask, request, url_for, session, redirect, render_template, jsonify
 import os
 from clients.spotify_client import SpotifyClient
@@ -22,6 +23,7 @@ from model.user import User
 
 from model.user import db
 import secrets
+from datetime import datetime, timedelta
 
 TOKEN_INFO_SPOTIFY = 'token_info_spotify'
 TOKEN_INFO_DEEZER = 'token_info_deezer'
@@ -134,28 +136,101 @@ def generate_token():
     token_info_spotify = session.get(TOKEN_INFO_SPOTIFY)
     # Check if playlist_id and playlist_name are provided
     if not playlist_id or not playlist_name:
-        return redirect(url_for('index'))
+        return redirect(url_for('playlists'))
     
-    token = secrets.token_urlsafe(16)
+  
     spotify_client = get_spotify_client(token_info_spotify)
     
     tracks = spotify_client.get_tracks_in_playlist(playlist_id)
     
-    playlist = Playlist(name=playlist_name)
+    playlist = Playlist(name=playlist_name, id=str(uuid.uuid4()))
+
+    
+    # a = Track.query.all()
+    # for name in a:
+    #     print(name.name)
+    for track in tracks:
+        print(track.name)
+        existing_track = Track.query.filter_by(name=track.name).first()
+        print(existing_track)
+        if existing_track:
+            print("track ezisrs")
+            for artist in existing_track.artists:
+            # Track with the same name already exists, link it to the artist and album
+                artist = Artist.query.filter_by(name=artist.name).first()
+                print("artist")
+                print(artist)
+                if not artist:
+                    print("VLiza li")
+                    # If the artist doesn't exist, create a new artist
+                    artist = Artist(id=str(uuid.uuid4()), name=artist.name)
+                    db.session.add(artist)
+                print("ne vleze")
+                if artist not in existing_track.artists:
+                    print("tuk")
+                    existing_track.artists.append(artist)
+  
+                existing_track.album_id = track.album.id
+                
+                if existing_track not in playlist.tracks:
+                    playlist.tracks.append(existing_track)
+        else:
+            album = Album.query.get(track.album.id)
+            print("Track exists in the db")
+            if not album:
+                # If the album doesn't exist, create a new album
+                album = Album(id=track.album.id, name=track.album.name)  # You may need to specify the album name
+                db.session.add(album)
+                    
+            new_track = Track(id=track.id, name=track.name, album=album, uri=track.uri, image_url=track.image_url)
+            for a in track.artists:
+            # Track with the name doesn't exist, create a new track, artist, and album
+                artist = Artist.query.filter_by(name=a.name).first()
+                if not artist:
+                    # If the artist doesn't exist, create a new artist
+                    artist = Artist(id=str(uuid.uuid4()), name=a.name)
+                    db.session.add(artist)
+                # Create a new track and link it to the artist and album
+                
+                new_track.artists.append(artist)
+                if new_track not in playlist.tracks:
+                    playlist.tracks.append(new_track)
+                db.session.add(new_track)
+    
     db.session.add(playlist)
     
-    for track in tracks:
-        song = Track(title=track.name, artist=track.artists, playlist=playlist)
-        db.session.add(song)
-     
-        # # Create and save the token
-        # token_obj = Token(token=token, playlist=playlist)
-        # db.session.add(token_obj)
-        
-        # db.session.commit()
-        # flash('Playlist and token generated successfully!')
-    return "sa"
+    
+    token_id = str(uuid.uuid4())
+    created_at = datetime.utcnow()  # Use utcnow() to ensure consistent timezone handling
+    expires_at = created_at + timedelta(days=1)
+    new_token = Token(
+        id=token_id,
+        created_at=created_at,
+        expires_at=expires_at,
+        playlist=playlist,  # Associate the token with the playlist you created
+        creator_id=current_user.id  # Associate the token with the user who created it
+    )
+    db.session.add(new_token)
 
+    db.session.commit()
+    domain = "http://127.0.0.1:5000/"
+    url = domain + "shared/" + token_id
+    return render_template("share.html", url=url)
+
+@app.route('/shared/<token_id>', methods=['GET'])
+def view_playlist(token_id):
+    token = Token.query.filter_by(id=token_id).first()
+
+    if not token:
+        return jsonify({'error': 'Playlist not found'}), 404
+
+    current_time = datetime.utcnow()
+    print(current_time)
+    if current_time > token.expires_at:
+        return jsonify({'error': 'Token has expired'}), 403
+
+    return render_template("shared_playlist_preview.html", token=token)
+    # return jsonify(playlist_data)
 
 @app.route('/login')
 def login():
@@ -272,9 +347,10 @@ def add_to_playlist():
     serialized_data =  {
             'id': track.id,
             'name': track.name,
-            'artists': track.artists,
+            'artists': [artist.serialize() for artist in track.artists],
             'uri' : track.uri,
-            'image_url': track.image_url
+            'image_url': track.image_url,
+            "album_name" : track.album.name
         }
     return jsonify(data=serialized_data), 200
 
@@ -404,11 +480,10 @@ def delete(platform, playlist_id):
     # for t in found_tracks:
     #     print(t.name)
     # return redirect(url_for('view', platform=platform, playlist_id=playlist_id, found_tracks=found_tracks))
-    
+
+
 @app.route('/search_tracks', methods=['POST'])
 def search():
-    # Assuming you perform a search and get search results here
-    search_results = ["Result 1", "Result 2", "Result 3"]
     search_query = request.json.get('searchQuery')
     platform = request.json.get('platform')
     token_info_deezer = session.get(TOKEN_INFO_DEEZER)
@@ -426,13 +501,15 @@ def search():
         {
             'id': track.id,
             'name': track.name,
-            'artists': track.artists,
+            'artists': [artist.serialize() for artist in track.artists],
             'uri' : track.uri,
-            'image_url': track.image_url
+            'image_url': track.image_url,
+            'album_name': track.album.name
         }
         for track in found_tracks
     ]
-    print(search_query)
+    print(serialized_results)
+    # print(search_query)
     # Return the search results as JSON
     return jsonify(results=serialized_results)
     # search_query = request.form.get('searchQuery')
@@ -464,6 +541,40 @@ def remove_track_from_playlist():
         deezer_client.remove_track_from_playlist(playlist_id=playlist_id, track_id=track_id)
     return jsonify(), 200
 
+
+@app.route('/transfer_shared_playlist', methods=['POST'])
+def transfer_shared_playlist():
+    platform = request.form['platform']
+    token_id = request.form['token_id']
+    token = Token.query.filter_by(id=token_id).first()
+
+    if not token:
+        return jsonify({'error': 'Playlist not found'}), 404
+
+    current_time = datetime.utcnow()
+    if current_time > token.expires_at:
+        return jsonify({'error': 'Token has expired'}), 403
+    
+    token_info_spotify = session.get(TOKEN_INFO_SPOTIFY)
+    token_info_deezer = session.get(TOKEN_INFO_DEEZER)
+    
+    if token_info_spotify and platform.lower() == "spotify":
+        spotify_client = get_spotify_client(session_token_info=token_info_spotify)
+        tracks = token.playlist.tracks
+        playlist_name = token.playlist.name
+        new_playlist_id = spotify_client.create_playlist(playlist_name)
+        spotify_client.add_tracks_to_playlist(tracks=tracks, playlist_id=new_playlist_id)
+    elif token_info_deezer and platform.lower() == "deezer":
+        deezer_client = get_deezer_client(session_token_info=token_info_deezer)
+        tracks = token.playlist.tracks
+        playlist_name = token.playlist.name
+        new_playlist_id = deezer_client.create_playlist(playlist_name)
+        deezer_client.add_tracks_to_playlist(tracks=tracks, playlist_id=new_playlist_id)
+    return f"Transferred to {platform} successfully! {token_id}"
+
+@app.route('/a', methods=['GET'])
+def a():
+    return render_template('asd.html')
 
 @app.route('/transfer_playlist_deezer_to_spotify', methods=['POST'])
 def transfer_playlist_deezer_to_spotify():

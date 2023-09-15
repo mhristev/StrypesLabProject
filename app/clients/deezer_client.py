@@ -81,8 +81,11 @@ class DeezerClient:
     
     def authorization_url(self):
         authorization_base_url = 'https://connect.deezer.com/oauth/auth.php'
-        
-        return f"https://connect.deezer.com/oauth/auth.php?app_id={self.app_id}&redirect_uri={self.redirect_uri}&perms=basic_access,manage_library,delete_library,email"
+        authorization_base_url = 'https://connect.deezer.com/oauth/auth.php'
+        deezer = OAuth2Session(self.app_id, redirect_uri=self.redirect_uri, scope=['basic_access', 'email', 'manage_library', 'delete_library'])
+        authorization_url, _ = deezer.authorization_url(authorization_base_url, ['basic_access', 'email', 'manage_library', 'delete_library'])
+        return authorization_url
+        # return f"https://connect.deezer.com/oauth/auth.php?app_id={self.app_id}&redirect_uri={self.redirect_uri}&perms=basic_access,email,manage_library,delete_library"
         # params = {
         #     'app_id': self.app_id,
         #     'redirect_uri': self.redirect_uri,  
@@ -98,6 +101,7 @@ class DeezerClient:
             'app_id': self.app_id,
             'secret': self.client_secret,
             'code': code,
+            'scope': 'basic_access,email,manage_library,delete_library'
         }
         response = requests.post(token_url, data=data)
         print("TUKKKKKKKKKKKKK")
@@ -199,13 +203,17 @@ class DeezerClient:
             print("No track IDs found.")
             return
         url = ""
-       
+        
         data = {
             "songs": ','.join(map(str, track_ids))
         }
 
+        # self.add_track_id_to_playlist(track_id, playlist_id)
         url = f"http://api.deezer.com/playlist/{playlist_id}/tracks?{self.get_session_access_token()}"
-     
+        # if len(track_ids) == 1:
+        #     data = {
+        #         "songs": track_ids[0]
+        #     }
         # data = {"songs": track_ids, "order": track_ids}
         
         response = requests.post(url, data=data)
@@ -221,7 +229,8 @@ class DeezerClient:
         for track in tracks:
             name = track.name
             artists = track.artists
-            track_id = self.search_track(name=name, artists_names=artists)
+            artists_names = [artist.name for artist in artists]
+            track_id = self.search_track(name=name, artists_names=artists_names)
             if track_id and track_id not in track_ids:
                 track_ids.append(track_id)
         return track_ids

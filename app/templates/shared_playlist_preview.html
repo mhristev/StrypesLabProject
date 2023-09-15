@@ -1,0 +1,57 @@
+{% extends "base.html" %} {% block title %}Login - Your App{% endblock %} {%
+block content %}
+<h1>This playlist was sent by {{ token.creator.display_name }}</h1>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h3>{{ token.playlist.name }}</h3>
+    </div>
+    <div class="col-md-6">
+        <h3>Songs</h3>
+        {% for track in token.playlist.tracks %}
+        <p>
+            {{track.name}} - {% for artist in track.artists %} {{ artist.name }}
+            {% endfor %}
+        </p>
+        {% endfor %}
+    </div>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                <h1 class="text-center">Transfer Playlist</h1>
+                <form
+                    method="POST"
+                    action="/transfer_shared_playlist"
+                    class="text-center"
+                >
+                    <input
+                        type="hidden"
+                        name="token_id"
+                        value="{{ token.id }}"
+                    />
+                    <div class="btn-group" role="group">
+                        {% if session.get("token_info_deezer") %}
+                        <button
+                            type="submit"
+                            name="platform"
+                            value="deezer"
+                            class="btn btn-primary"
+                        >
+                            Transfer to Deezer
+                        </button>
+                        {% endif %} {% if session.get("token_info_spotify") %}
+                        <button
+                            type="submit"
+                            name="platform"
+                            value="spotify"
+                            class="btn btn-success"
+                        >
+                            Transfer to Spotify
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} s

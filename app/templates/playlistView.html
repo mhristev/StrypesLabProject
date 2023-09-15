@@ -30,6 +30,9 @@ block content %}
                             />
                             <div>
                                 <h5 class="mt-0">{{ track.name }}</h5>
+                                <p class="mt-0">
+                                    Album: {{ track.album.name }}
+                                </p>
                                 {% for artist in track.artists %}
                                 <p>{{ artist.name }}</p>
                                 {% endfor %}

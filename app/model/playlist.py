@@ -7,7 +7,7 @@
 from .db_setup import db
 
 class Playlist(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(255), primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     image_url = db.Column(db.String(255))
     number_of_tracks = db.Column(db.Integer)
@@ -15,6 +15,6 @@ class Playlist(db.Model):
     
 playlist_track = db.Table(
     'playlist_track',
-    db.Column('playlist_id', db.Integer, db.ForeignKey('playlist.id'), primary_key=True),
-    db.Column('track_id', db.Integer, db.ForeignKey('track.id'), primary_key=True)
+    db.Column('playlist_id', db.String(255), db.ForeignKey('playlist.id'), primary_key=True),
+    db.Column('track_id', db.String(255), db.ForeignKey('track.id'), primary_key=True)
 )

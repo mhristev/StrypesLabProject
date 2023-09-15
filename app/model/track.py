@@ -9,7 +9,7 @@ from .db_setup import db
 
     
 class Track(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(255), primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     uri = db.Column(db.String(255), nullable=True)
     image_url = db.Column(db.String(255))

@@ -8,13 +8,28 @@
 from .db_setup import db
 
 class Artist(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
-    uri = db.Column(db.String(255), nullable=False)
+    id = db.Column(db.String(255),  primary_key=True)
+    name = db.Column(db.String(255), nullable=False, unique=True)
+    uri = db.Column(db.String(255), nullable=True)
     tracks = db.relationship('Track', secondary='track_artist', back_populates='artists')
 
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'uri': self.uri
+        }
+    @classmethod
+    def get_or_create(cls, name):
+        exists = db.session.query(Artist.id).filter_by(name=name).scalar() is not None
+        print(exists)
+        print(name)
+        if exists:
+            return db.session.query(Artist).filter_by(name=name).first()
+        return cls(name=name)
+    
 track_artist = db.Table(
     'track_artist',
-    db.Column('track_id', db.Integer, db.ForeignKey('track.id'), primary_key=True),
-    db.Column('artist_id', db.Integer, db.ForeignKey('artist.id'), primary_key=True)
+    db.Column('track_id', db.String(255), db.ForeignKey('track.id'), primary_key=True),
+    db.Column('artist_id', db.String(255), db.ForeignKey('artist.id'), primary_key=True)
 )

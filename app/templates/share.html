@@ -1,0 +1,24 @@
+{% extends "base.html" %} {% block title %}Login - Your App{% endblock %} {%
+block content %}
+<div class="content">
+    <!-- Your page-specific content goes here -->
+
+    <!-- Text field for entering the URL -->
+    <input type="text" id="urlField" value="{{ url }}" readonly />
+
+    <!-- Button to copy the URL -->
+    <button id="copyButton">Copy URL</button>
+</div>
+<script>
+    // JavaScript for copying the URL when the button is clicked
+    document
+        .getElementById("copyButton")
+        .addEventListener("click", function () {
+            // Get the URL from the input field
+            var urlField = document.getElementById("urlField");
+            urlField.select();
+            document.execCommand("copy");
+            alert("URL copied to clipboard: " + urlField.value);
+        });
+</script>
+{% endblock %}

@@ -1,7 +1,7 @@
 from .db_setup import db
 
 class Token(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(255), primary_key=True)
     created_at = db.Column(db.DateTime, nullable=False)
     expires_at = db.Column(db.DateTime, nullable=False)
     playlist_id = db.Column(db.Integer, db.ForeignKey('playlist.id'), nullable=False)

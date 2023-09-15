@@ -32,20 +32,31 @@ block content %}
         location.reload(true);
     }
 </script>
-
+<style>
+    .card-spacing {
+        margin-left: 20px; /* Adjust the value to control the spacing */
+    }
+    .small-image {
+        max-width: 45px;
+        max-height: 45px;
+    }
+</style>
+<div class="container">
+    <div class="row">
+        <div class="col-6 border-right">
 <h1>Playlists Spotify</h1>
-{% if spotify_playlists != None %}
+{% if session.get("token_info_spotify") and spotify_playlists != None %}
 <div class="input-group">
-    <form id="createPlaylistForm">
+    <form id="createPlaylistForm"  class="form-inline my-2 my-lg-0">
         <input type="hidden" name="form_name" value="spotify" />
         <input
             type="text"
-            class="form-control"
+            class="form-control mr-sm-2"
             name="new_playlist_name"
             placeholder="New Playlist Name"
         />
         <button
-            class="btn btn-primary"
+            class="btn btn-primary my-2 my-sm-0"
             id="createPlaylistButton"
             onclick="createPlaylist('spotify', event)"
         >
@@ -56,9 +67,10 @@ block content %}
 
 <div class="row" id="spotifyPlaylistsContainer">
     {% for playlist in spotify_playlists %}
+<div     class="col-6">
 
-    <div class="col-md-4" id="playlistCard{{ playlist.id }}">
-        <div class="card mb-4" style="width: 18rem">
+    <div id="playlistCard{{ playlist.id }}">
+        <div class="card " style="width: 15rem">
             <img
                 src="{{ playlist.image_url }}"
                 class="card-img-top"
@@ -90,7 +102,7 @@ block content %}
             class="btn btn-warning"
             href="{{ url_for('generate_token', playlist_id=playlist.id, playlist_name=playlist.name) }}""
         >
-            Create Share URL
+            Share
         </a>
 
         <!-- Button trigger modal -->
@@ -171,6 +183,7 @@ block content %}
             </div>
         </div>
     </div>
+</div>
     {% endfor %}
 </div>
 {% else %}
@@ -179,21 +192,23 @@ block content %}
     >Authorize Spotify</a
 >
 {% endif %}
+</div>
 
+<div class="col-6">
 <h1>Playlists Deezer</h1>
-{% if deezer_playlists != None %}
+{% if session.get("token_info_deezer") and deezer_playlists != None %}
 <div class="input-group">
-    <form id="createPlaylistDeezerForm">
+    <form id="createPlaylistDeezerForm" class="form-inline my-2 my-lg-0">
         <input type="hidden" name="form_name" value="deezer" />
         <input
             type="text"
-            class="form-control"
+            class="form-control mr-sm-2"
             name="new_playlist_name"
             id="new_playlist_name2"
             placeholder="New Playlist Name"
         />
         <button
-            class="btn btn-primary"
+            class="btn btn-primary my-2 my-sm-0"
             onclick="createPlaylist('deezer', event)"
         >
             Create
@@ -201,11 +216,24 @@ block content %}
     </form>
 </div>
 
-<ul>
-    <div class="row" id="deezerPlaylistsContainer">
+
+    
+    <!-- <div class="row" id="deezerPlaylistsContainer">
+        <div class="row">
+            <div class="col-md-12">
+                <input
+                    type="text"
+                    id="playlistSearch"
+                    class="form-control"
+                    placeholder="Search playlists"
+                />
+            </div>
+        </div> -->
+        <div class="row" id="deezerPlaylistsContainer">
         {% for playlist in deezer_playlists %}
-        <div class="col-md-4" id="playlistCard{{ playlist.id }}">
-            <div class="card mb-4" style="width: 18rem">
+        <div class="col-6">
+        <div id="playlistCard{{ playlist.id }}">
+            <div class="card" style="width: 15rem">
                 <img
                     src="{{ playlist.image_url }}"
                     class="card-img-top"
@@ -216,25 +244,26 @@ block content %}
                     <p class="card-text">
                         Tracks: {{ playlist.number_of_tracks }}
                     </p>
+                    <div class="row">
+                        <div class="col-6">
+                            <a class="btn btn-block" data-toggle="modal" data-target="#spotifyModal{{ playlist.id }}"><img src="{{ url_for('static', filename='imgs/spotify_icon.png') }}" alt="Spotify Icon" class="img-fluid small-image" /></a>
+                        </div>
+                        <div class="col-6">
+                            <a class="btn" href="{{ url_for('generate_token', playlist_id=playlist.id, playlist_name=playlist.name) }}"><img src="{{ url_for('static', filename='imgs/share.png') }}" alt="Share Icon" class="img-fluid small-image" /></a>
+                        </div>
+                    </div>
+                            <a href="{{ url_for('view', playlist_id=playlist.id, platform='deezer') }}" class=" stretched-link"></a>
+                       
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <a class="btn btn-danger btn-block" onclick="deletePlaylist('deezer', '{{ playlist.id }}')">Delete</a>
+                        </div>
+                    </div>
                 </div>
-                <a
-                    href="{{ url_for('view', playlist_id=playlist.id, platform='deezer') }}"
-                    class="btn btn-primary stretched-link"
-                    >View</a
-                >
+                
             </div>
-            <a
-                class="btn btn-warning"
-                onclick="deletePlaylist('deezer', '{{ playlist.id }}')"
-                >Delete</a
-            >
-            <a
-                class="btn btn-warning"
-                data-toggle="modal"
-                data-target="#spotifyModal{{ playlist.id }}"
-            >
-                Transfer to Spotify
-            </a>
+        
 
             <div
                 class="modal fade spotifyModal"
@@ -305,12 +334,18 @@ block content %}
                 </div>
             </div>
         </div>
+    </div>
         {% endfor %}
     </div>
-</ul>
+    </div>
+
 {% else %}
 <div class="alert alert-warning" role="alert">No Deezer playlists found.</div>
 <a href="{{ url_for('auth_deezer') }}" class="btn btn-primary"
     >Authorize Deezer</a
 >
-{% endif %} {% endblock %}
+{% endif %}
+</div>
+</div>
+</div>
+ {% endblock %}

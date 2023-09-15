@@ -33,6 +33,7 @@ function searchTracks() {
                 } else {
                     track_identifier = track.uri;
                 }
+                albumName = track.album_name;
                 newCard.id = "FoundTrackCard" + track_identifier;
                 newCard.innerHTML = `
                 <div class="col-md-4">
@@ -41,8 +42,10 @@ function searchTracks() {
     <div class="col-md-8">
       <div class="card-body">
         <h5 class="card-title"> ${track.name}</h5>
-        <p class="card-text">${"Artists: " + track.artists.join(", ")}</p>
-        <p class="card-text"><small class="text-muted">Album:</small></p>
+        <p class="card-text">Artist: ${track.artists
+            .map((artist) => artist.name)
+            .join(", ")}</p>
+        <p class="card-text"><small class="text-muted">Album:${albumName}</small></p>
         <button class="btn btn-primary" onclick="addToPlaylist('${track_identifier}')">Add to Playlist</button>
       </div>
     </div>
@@ -82,6 +85,7 @@ function addToPlaylist(trackId) {
                     console.log(data);
                     track_name = data.data.name;
                     track_image = data.data.image_url;
+                    track_album = data.data.album_name;
                     console.log(track_name, track_image);
                     const cardHtml = `
                     <div class="row mb-4" id="trackCard${trackId}">
@@ -97,12 +101,15 @@ function addToPlaylist(trackId) {
                                 />
                                 <div>
                                     <h5 class="mt-0">${track_name}</h5>
-                                 
+                                    <p class="mt-0">Album: ${track_album}</p>
+                                    <p class="mt-0">${data.data.artists
+                                        .map((artist) => artist.name)
+                                        .join(", ")}</p>
                                 </div>
                             </div>
                             <button
                                 class="btn btn-danger remove-track-button"
-                                onclick="removeTrackFromPlaylist(${trackId}, ${playlistId}, ${platform})"
+                                onclick="removeTrackFromPlaylist('${trackId}', '${playlistId}', '${platform}')"
                             >
                                 Remove
                             </button>

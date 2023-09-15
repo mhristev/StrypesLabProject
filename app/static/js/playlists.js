@@ -269,3 +269,24 @@ function createPlaylist(platform, event) {
             console.error("Error:", error);
         });
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("playlistSearch");
+    const playlistCards = document.querySelectorAll("[id^='playlistCard']");
+
+    searchInput.addEventListener("input", function () {
+        const searchTerm = searchInput.value.toLowerCase();
+
+        playlistCards.forEach(function (card) {
+            const playlistName = card
+                .querySelector(".card-text")
+                .textContent.toLowerCase();
+
+            if (playlistName.includes(searchTerm)) {
+                card.style.display = "block";
+            } else {
+                card.style.display = "none";
+            }
+        });
+    });
+});
