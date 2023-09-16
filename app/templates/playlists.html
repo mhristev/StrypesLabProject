@@ -3,48 +3,23 @@ block content %}
 
 <script src="/static/js/playlists.js"></script>
 <script>
-    // Get references to the modal and input elements
-
-    /*
-            it's been a while since this was posted but I found a more elegant solution if you are not needing to support old browsers.
-
-                You can do a check with
-
-                performance.navigation.type
-                Documentation including browser support is here: https://developer.mozilla.org/en-US/docs/Web/API/Performance/navigation
-
-                So to see if the page was loaded from history using back you can do
-
-                if(performance.navigation.type == 2){
-                location.reload(true);
-                }
-                The 2 indicates the page was accessed by navigating into the history. Other possibilities are-
-
-                0:The page was accessed by following a link, a bookmark, a form submission, or a script, or by typing the URL in the address bar.
-
-                1:The page was accessed by clicking the Reload button or via the Location.reload() method.
-
-                255: Any other way
-
-                These are detailed here: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceNavigation
-            */
     if (performance.navigation.type == 2) {
         location.reload(true);
     }
 </script>
 <style>
     .card-spacing {
-        margin-left: 20px; /* Adjust the value to control the spacing */
+        margin-left: 20px;
     }
     .small-image {
         max-width: 45px;
         max-height: 45px;
     }
     .custom-thicc-border-right {
-        border-right: 2px solid rgb(99, 97, 99); /* You can adjust the thickness and color as needed */
+        border-right: 2px solid rgb(99, 97, 99); 
     }
-</style
 </style>
+
 <div class="container">
     <div class="row mb-4">
         <div class="col-md-12">
@@ -111,7 +86,7 @@ block content %}
                 <div class="col-6">
                     <a
                         class="btn"
-                        href="{{ url_for('generate_token', playlist_id=playlist.id, playlist_name=playlist.name) }}""
+                        href="{{ url_for('generate_token', playlist_id=playlist.id, playlist_name=playlist.name, platform='spotify') }}""
                     >
                     <img src="{{ url_for('static', filename='imgs/share.png') }}" alt="Share Icon" class="img-fluid small-image" />
                     </a>
@@ -179,7 +154,6 @@ block content %}
                             style="display: none"
                         >
                             Transfering...
-                            <!-- You can replace this with a spinner or progress bar HTML -->
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -229,9 +203,6 @@ block content %}
     </form>
 </div>
 
-
-    
-
         
         <div class="row" id="deezerPlaylistsContainer">
         {% for playlist in deezer_playlists %}
@@ -258,7 +229,7 @@ block content %}
                                 <a class="btn btn-block" data-toggle="modal" data-target="#spotifyModal{{ playlist.id }}"><img src="{{ url_for('static', filename='imgs/spotify_icon.png') }}" alt="Spotify Icon" class="img-fluid small-image" /></a>
                             </div>
                             <div class="col-6">
-                                <a class="btn" href="{{ url_for('generate_token', playlist_id=playlist.id, playlist_name=playlist.name) }}"><img src="{{ url_for('static', filename='imgs/share.png') }}" alt="Share Icon" class="img-fluid small-image" /></a>
+                                <a class="btn" href="{{ url_for('generate_token', playlist_id=playlist.id, playlist_name=playlist.name, platform='deezer') }}"><img src="{{ url_for('static', filename='imgs/share.png') }}" alt="Share Icon" class="img-fluid small-image" /></a>
                             </div>
                         </div>
                                 

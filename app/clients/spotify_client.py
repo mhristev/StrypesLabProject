@@ -281,6 +281,11 @@ class SpotifyClient:
          
     def get_tracks_uri(self, tracks):
         track_uris = []
+        print("))" * 100)
+        for t in tracks:
+            print(t.name)
+            print(t.album.id)
+        print("))" * 100)
         for track in tracks:
             name = track.name
             artists = track.artists

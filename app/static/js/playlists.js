@@ -20,9 +20,9 @@ function transferDeezerToSpotify(playlistId, playlistName) {
                 console.log("Playlist transferred successfully");
                 response.json().then((data) => {
                     console.log(data);
-                    const new_playlistId = data.data.playlist_id; // Replace with the actual field name from your Flask response
-                    const playlistName = data.data.playlist_name; // Replace with the actual field name from your Flask response
-                    const nbOfTracks = data.data.number_of_tracks; // Replace with the actual field nam
+                    const new_playlistId = data.data.playlist_id;
+                    const playlistName = data.data.playlist_name;
+                    const nbOfTracks = data.data.number_of_tracks;
                     const viewUrl = data.data.view_url;
                     const deleteUrl = data.data.delete_url;
                     const image_url = data.data.image_url;
@@ -95,21 +95,15 @@ function transferSpotifyToDeezer(playlistId, playlistName) {
         }),
     })
         .then((response) => {
-            // Handle the server's response here (e.g., show a success message)
             if (response.ok) {
-                console.log("Playlist transferred successfully");
                 response.json().then((data) => {
-                    console.log(data);
-                    const new_playlistId = data.data.playlist_id; // Replace with the actual field name from your Flask response
-                    const playlistName = data.data.playlist_name; // Replace with the actual field name from your Flask response
-                    const nbOfTracks = data.data.number_of_tracks; // Replace with the actual field nam
+                    const new_playlistId = data.data.playlist_id;
+                    const playlistName = data.data.playlist_name;
+                    const nbOfTracks = data.data.number_of_tracks;
                     const viewUrl = data.data.view_url;
                     const deleteUrl = data.data.delete_url;
-                    // const transferUrl = data.data.transfer_url;
                     const image_url = data.data.image_url;
-                    console.log("Playlist name: " + playlistName);
-                    console.log(new_playlistId);
-                    // Create a new card element
+
                     const newCard = document.createElement("div");
                     newCard.className = "col-6";
                     newCard.innerHTML = `
@@ -158,20 +152,14 @@ function transferSpotifyToDeezer(playlistId, playlistName) {
         .catch((error) => {
             console.error("Error:", error);
         });
-
-    // Close the modal (optional)
 }
 
 function deletePlaylist(platform, playlistId) {
-    console.log(platform);
-    console.log(playlistId);
     fetch(`/delete/${platform}/${playlistId}`, {
         method: "POST",
     })
         .then((response) => {
             if (response.ok) {
-                console.log("TIIIIKKKK");
-                // Handle success, e.g., remove the playlist card from the UI
                 const playlistCard = document.getElementById(
                     `playlistCard${playlistId}`
                 );
@@ -179,19 +167,16 @@ function deletePlaylist(platform, playlistId) {
                     playlistCard.remove();
                 }
             } else {
-                // Handle errors here
                 console.error("Error deleting playlist");
             }
         })
         .catch((error) => {
-            // Handle network or other errors here
             console.error("Error:", error);
         });
 }
 
 function createPlaylist(platform, event) {
     event.preventDefault();
-    console.log("Creating playlist");
     formData = null;
     const spotifyPlaylistsContainer = document.getElementById(
         "spotifyPlaylistsContainer"
@@ -203,8 +188,6 @@ function createPlaylist(platform, event) {
         "spotifyPlaylistsContainer"
     );
 
-    console.log(spotifyPlaylistsContainer1);
-    console.log(deezerPlaylistsContainer);
     var removing_value = "";
     if (platform.toLowerCase() == "spotify") {
         const form = document.getElementById("createPlaylistForm");
@@ -223,20 +206,15 @@ function createPlaylist(platform, event) {
             console.log("tuk");
             if (response.ok) {
                 console.log("OK");
-                // Handle success, you can optionally redirect or show a success message
                 console.log("Playlist created successfully!");
                 response.json().then((data) => {
-                    console.log(data);
-                    const playlistId = data.data.playlist_id; // Replace with the actual field name from your Flask response
-                    const playlistName = data.data.playlist_name; // Replace with the actual field name from your Flask response
+                    const playlistId = data.data.playlist_id;
+                    const playlistName = data.data.playlist_name;
                     const viewUrl = data.data.view_url;
                     const deleteUrl = data.data.delete_url;
                     const platform = data.data.platform;
                     const image_url = data.data.image_url;
 
-                    console.log("Playlist name: " + playlistName);
-                    console.log(playlistId);
-                    // Create a new card element
                     const newCard = document.createElement("div");
                     newCard.className = "col-6";
                     newCard.innerHTML = `
@@ -277,7 +255,6 @@ function createPlaylist(platform, event) {
                             firstCard
                         );
                     } else if (platform.toLowerCase() == "deezer") {
-                        console.log("in the if for deezer");
                         const deezerPlaylistsContainer =
                             document.getElementById("deezerPlaylistsContainer");
                         console.log(deezerPlaylistsContainer);
@@ -290,12 +267,10 @@ function createPlaylist(platform, event) {
                     }
                 });
             } else {
-                // Handle errors here
                 console.error("Error creating playlist");
             }
         })
         .catch((error) => {
-            // Handle network or other errors here
             console.error("Error:", error);
         });
 }

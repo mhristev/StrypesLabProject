@@ -19,15 +19,7 @@ class Artist(db.Model):
             'name': self.name,
             'uri': self.uri
         }
-    @classmethod
-    def get_or_create(cls, name):
-        exists = db.session.query(Artist.id).filter_by(name=name).scalar() is not None
-        print(exists)
-        print(name)
-        if exists:
-            return db.session.query(Artist).filter_by(name=name).first()
-        return cls(name=name)
-    
+
 track_artist = db.Table(
     'track_artist',
     db.Column('track_id', db.String(255), db.ForeignKey('track.id'), primary_key=True),

@@ -1,0 +1,14 @@
+.card-spacing {
+    margin-left: 20px; /* Adjust the value to control the spacing */
+}
+.small-image {
+    max-width: 45px;
+    max-height: 45px;
+}
+.custom-thicc-border-right {
+    border-right: 2px solid rgb(99, 97, 99); /* You can adjust the thickness and color as needed */
+}
+.image_share_page {
+    width: 70px;
+    height: 70px;
+}

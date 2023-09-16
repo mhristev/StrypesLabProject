@@ -9,7 +9,6 @@ block content %}
     <input type="hidden" id="playlistId" value="{{ playlist_id }}" />
     <input type="hidden" id="platform" value="{{ platform }}" />
     <div class="row">
-        <!-- Left Column -->
         <div class="col-md-6">
             <h2>{{ playlist_name }}</h2>
             <div id="playlistTracks">
@@ -50,15 +49,11 @@ block content %}
                         Remove
                     </button>
                 </div>
-
-                <!-- Close the row for each track -->
                 {% endfor %}
             </div>
         </div>
-        <!-- Right Column -->
 
         <div class="col-md-6">
-            <!-- Search Bar -->
             <h3>Add new songs</h3>
             <div class="input-group mb-3">
                 <input
@@ -72,11 +67,7 @@ block content %}
                     Search
                 </button>
             </div>
-
-            <!-- Search Results -->
-            <div id="searchResults">
-                <!-- Search results will be added here -->
-            </div>
+            <div id="searchResults"></div>
         </div>
     </div>
 </div>

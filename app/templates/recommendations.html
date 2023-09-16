@@ -13,9 +13,14 @@ block content %}
         {% for track in recommended_tracks %}
         <div class="col-md-6 mb-3">
             <div class="card">
-                <a href="{{ track.uri }}" class="btn btn-primary stretched-link"
-                    >Go somewhere</a
-                >
+                {% if track.uri %}
+                <a href="{{ track.uri }}" class="stretched-link"></a>
+                {% else %}
+                <a
+                    href="https://www.deezer.com/track/{{ track.id }}"
+                    class="stretched-link"
+                ></a>
+                {% endif %}
                 <div class="row g-0">
                     <div class="col-md-4">
                         <img

@@ -1,11 +1,39 @@
 {% extends "base.html" %} {% block title %}Login - Your App{% endblock %} {%
 block content %}
-<h1>This playlist was sent by {{ token.creator.display_name }}</h1>
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <h3>{{ token.playlist.name }}</h3>
+
+<div class="row mb-3">
+    <div class="col-12 input-group">
+        <input
+            type="text"
+            id="urlInput"
+            value="{{ url }}"
+            readonly
+            class="form-control"
+        />
+        <div class="input-group-append">
+            <button
+                class="btn btn-secondary"
+                type="button"
+                onclick="copyToClipboard()"
+            >
+                Copy
+            </button>
+        </div>
     </div>
-    <div class="col-md-6">
+    <div
+        class="alert alert-success mt-3"
+        id="copyNotification"
+        style="display: none"
+    >
+        Text copied to clipboard!
+    </div>
+</div>
+<div class="row">
+    <div class="col-4">
+        <h1>Created by<br />{{ token.creator.display_name }}</h1>
+    </div>
+    <div class="col-4">
+        <h3>{{ token.playlist.name }}</h3>
         <h3>Songs</h3>
         {% for track in token.playlist.tracks %}
         <p>
@@ -14,15 +42,17 @@ block content %}
         </p>
         {% endfor %}
     </div>
-    <div class="container mt-5">
+    <div class="col-4">
         <div class="row">
-            <div class="col-md-6 offset-md-3">
-                <h1 class="text-center">Transfer Playlist</h1>
-                <form
-                    method="POST"
-                    action="/transfer_shared_playlist"
-                    class="text-center"
-                >
+            <div class="col-12 text-center">
+                <h1>Share Playlist</h1>
+            </div>
+        </div>
+
+        <!-- Buttons row -->
+        <div class="row mt-3">
+            <div class="col-12 text-center">
+                <form method="POST" action="/transfer_shared_playlist">
                     <input
                         type="hidden"
                         name="token_id"
@@ -34,18 +64,26 @@ block content %}
                             type="submit"
                             name="platform"
                             value="deezer"
-                            class="btn btn-primary"
+                            class="mx-3"
                         >
-                            Transfer to Deezer
+                            <img
+                                src="{{ url_for('static', filename='imgs/deezer_icon.png') }}"
+                                alt="Deezer Icon"
+                                class="img-fluid image_share_page"
+                            />
                         </button>
                         {% endif %} {% if session.get("token_info_spotify") %}
                         <button
                             type="submit"
                             name="platform"
                             value="spotify"
-                            class="btn btn-success"
+                            class="mx-3"
                         >
-                            Transfer to Spotify
+                            <img
+                                src="{{ url_for('static', filename='imgs/spotify_icon.png') }}"
+                                alt="Spotify Icon"
+                                class="img-fluid image_share_page"
+                            />
                         </button>
                         {% endif %}
                     </div>
@@ -53,5 +91,26 @@ block content %}
             </div>
         </div>
     </div>
+    <div class="container">
+        <!-- Input row -->
+
+        <!-- Title row -->
+    </div>
 </div>
+
+<script>
+    function copyToClipboard() {
+        var urlInput = document.getElementById("urlInput");
+
+        urlInput.select();
+        urlInput.setSelectionRange(0, 99999);
+
+        document.execCommand("copy");
+        var notification = document.getElementById("copyNotification");
+        notification.style.display = "block";
+        setTimeout(function () {
+            notification.style.display = "none";
+        }, 2000);
+    }
+</script>
 {% endblock %} s

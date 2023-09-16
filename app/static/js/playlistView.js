@@ -1,11 +1,8 @@
 function searchTracks() {
-    // Get the search query from the input field
     const searchQuery = document.getElementById("searchBar").value;
-    console.log(searchQuery);
     const playlist_id = document.getElementById("playlistId").value;
     const platform = document.getElementById("platform").value;
-    console.log(playlist_id, platform);
-    // Send a POST request to /baba with the search query
+
     fetch("/search_tracks", {
         method: "POST",
         headers: {
@@ -15,15 +12,13 @@ function searchTracks() {
             searchQuery: searchQuery,
             playlist_id: playlist_id,
             platform: platform,
-        }), // Send the search query as JSON
+        }),
     })
         .then((response) => response.json())
         .then((data) => {
-            // Update the #searchResults div with the search results
             const searchResultsDiv = document.getElementById("searchResults");
-            searchResultsDiv.innerHTML = ""; // Clear previous results
+            searchResultsDiv.innerHTML = "";
 
-            // Create Bootstrap cards for each track
             data.results.forEach((track) => {
                 const newCard = document.createElement("div");
                 newCard.className = "card mb-3";
@@ -67,11 +62,8 @@ function searchTracks() {
 }
 
 function addToPlaylist(trackId) {
-    console.log("AAAAA");
-    // Get the value of the hidden input with id "playlistId"
     const playlistId = document.getElementById("playlistId").value;
 
-    // Get the value of the hidden input with id "platform"
     const platform = document.getElementById("platform").value;
     console.log(trackId, playlistId, platform);
     fetch(`/add_to_playlist`, {
@@ -134,25 +126,20 @@ function addToPlaylist(trackId) {
                     const playlistTracksContainer =
                         document.getElementById("playlistTracks");
 
-                    // Create a new div element to hold the card
                     const newCardContainer = document.createElement("div");
 
-                    // Set the innerHTML of the new container to the card HTML
                     newCardContainer.innerHTML = cardHtml;
 
-                    // Insert the new card at the beginning of the container
                     playlistTracksContainer.insertBefore(
                         newCardContainer,
                         playlistTracksContainer.firstChild
                     );
                 });
             } else {
-                // Handle error cases here
                 console.error("Error removing track");
             }
         })
         .catch((error) => {
-            // Handle network or other errors here
             console.error("Error:", error);
         });
 }
@@ -181,12 +168,10 @@ function removeTrackFromPlaylist(trackId, playlistId, platform) {
                     console.log(`Track with ID ${trackId} not found.`);
                 }
             } else {
-                // Handle error cases here
                 console.error("Error removing track");
             }
         })
         .catch((error) => {
-            // Handle network or other errors here
             console.error("Error:", error);
         });
 }
