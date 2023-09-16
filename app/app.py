@@ -84,10 +84,6 @@ def check_for_expired_tokens():
         d = str(session.get(TOKEN_DEEZER_EXPIRES_ON))
         given_datetime = datetime.fromisoformat(d)
         current_time = datetime.now(pytz.utc)
-        print(current_time)
-        print (current_time > given_datetime)
-    
-       
         if current_time >= given_datetime:
             print("Expired token")
             session[TOKEN_INFO_DEEZER] = None
