@@ -18,11 +18,36 @@
     </head>
     <body>
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <a class="navbar-brand" href="#">App</a>
-            <a class="navbar-brand" href="/logout">Logout</a>
-            <a class="navbar-brand" href="/playlists">Playlists</a>
-            <a class="navbar-brand" href="/profile">Profile</a>
-            <a class="navbar-brand" href="/recommendations">Rwecommendations</a>
+            <a class="navbar-brand" href="/">App</a>
+
+            <!-- Links on the left side -->
+            {% if current_user.is_authenticated %}
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/playlists">Playlists</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/profile">Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/recommendations"
+                        >Recommendations</a
+                    >
+                </li>
+            </ul>
+            {% endif %}
+
+            <ul class="navbar-nav ml-auto">
+                {% if current_user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="/logout">Logout</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="/login">Login</a>
+                </li>
+                {% endif %}
+            </ul>
         </nav>
         <div class="container mt-4">{% block content %}{% endblock %}</div>
     </body>

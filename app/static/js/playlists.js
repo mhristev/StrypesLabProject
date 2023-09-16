@@ -27,10 +27,14 @@ function transferDeezerToSpotify(playlistId, playlistName) {
                     const deleteUrl = data.data.delete_url;
                     const image_url = data.data.image_url;
                     const newCard = document.createElement("div");
-                    newCard.className = "col-md-4";
-                    newCard.innerHTML = `
-                    <div class="card mb-4" style="width: 18rem">
-                        <img
+                    newCard.className = "col-6";
+                    newCard.innerHTML = ` <div id="playlistCard${playlistId}">
+                    <div class="card" style="width: 15rem">
+                    <a
+                            href="${viewUrl}"
+                            style="text-decoration: none; color: black;"
+                        >    
+                    <img
                             src="${image_url}"
                             class="card-img-top"
                             alt="..."
@@ -38,16 +42,21 @@ function transferDeezerToSpotify(playlistId, playlistName) {
                         <div class="card-body">
                             <p class="card-text">${playlistName}</p>
                             <p class="card-text">Tracks: ${nbOfTracks}</p>
-                        </div>
-                        <a
-                            href="${viewUrl}"
-                            class="btn btn-primary stretched-link"
-                        >View</a>
-                    </div>
-                    <a
+                            </a>
+                            <div class="row">
+                            <div class="col-12">
+                            <a
                         href="${deleteUrl}"
-                        class="btn btn-warning"
-                    >Delete</a>
+                        class="btn btn-danger btn-block"
+                    >Unfollow</a>
+                            </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+                    
                 `;
 
                     const spotifyPlaylistsContainer = document.getElementById(
@@ -102,10 +111,15 @@ function transferSpotifyToDeezer(playlistId, playlistName) {
                     console.log(new_playlistId);
                     // Create a new card element
                     const newCard = document.createElement("div");
-                    newCard.className = "col-md-4";
+                    newCard.className = "col-6";
                     newCard.innerHTML = `
-                    <div class="card mb-4" style="width: 18rem">
-                        <img
+                    <div id="playlistCard${playlistId}">
+                    <div class="card" style="width: 15rem">
+                    <a
+                            href="${viewUrl}"
+                            style="text-decoration: none; color: black;"
+                        >    
+                    <img
                             src="${image_url}"
                             class="card-img-top"
                             alt="..."
@@ -113,16 +127,20 @@ function transferSpotifyToDeezer(playlistId, playlistName) {
                         <div class="card-body">
                             <p class="card-text">${playlistName}</p>
                             <p class="card-text">Tracks: ${nbOfTracks}</p>
-                        </div>
-                        <a
-                            href="${viewUrl}"
-                            class="btn btn-primary stretched-link"
-                        >View</a>
-                    </div>
-                    <a
+                            </a>
+                            <div class="row">
+                            <div class="col-12">
+                            <a
                         href="${deleteUrl}"
-                        class="btn btn-warning"
+                        class="btn btn-danger btn-block"
                     >Delete</a>
+                            </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
                 `;
 
                     const deezerPlaylistsContainer = document.getElementById(
@@ -143,8 +161,7 @@ function transferSpotifyToDeezer(playlistId, playlistName) {
 
     // Close the modal (optional)
 }
-// JavaScript for handling playlist deletion
-// JavaScript for handling playlist deletion
+
 function deletePlaylist(platform, playlistId) {
     console.log(platform);
     console.log(playlistId);
@@ -188,13 +205,15 @@ function createPlaylist(platform, event) {
 
     console.log(spotifyPlaylistsContainer1);
     console.log(deezerPlaylistsContainer);
-
+    var removing_value = "";
     if (platform.toLowerCase() == "spotify") {
         const form = document.getElementById("createPlaylistForm");
         formData = new FormData(form);
+        removing_value = "Unfollow";
     } else if (platform.toLowerCase() == "deezer") {
         const form = document.getElementById("createPlaylistDeezerForm");
         formData = new FormData(form);
+        removing_value = "Delete";
     }
     fetch("/create_playlist", {
         method: "POST",
@@ -214,30 +233,41 @@ function createPlaylist(platform, event) {
                     const deleteUrl = data.data.delete_url;
                     const platform = data.data.platform;
                     const image_url = data.data.image_url;
+
                     console.log("Playlist name: " + playlistName);
                     console.log(playlistId);
                     // Create a new card element
                     const newCard = document.createElement("div");
-                    newCard.className = "col-md-4";
+                    newCard.className = "col-6";
                     newCard.innerHTML = `
-                    <div class="card mb-4" style="width: 18rem">
-                        <img
-                            src="${image_url}"
-                            class="card-img-top"
-                            alt="..."
-                        />
-                        <div class="card-body">
-                            <p class="card-text">${playlistName}</p>
-                        </div>
+                    <div id="playlistCard${playlistId}">
+                        <div class="card" style="width: 15rem">
                         <a
-                            href="${viewUrl}"
-                            class="btn btn-primary stretched-link"
-                        >View</a>
+                                href="${viewUrl}"
+                                style="text-decoration: none; color: black;"
+                            >    
+                        <img
+                                src="${image_url}"
+                                class="card-img-top"
+                                alt="..."
+                            />
+                            <div class="card-body">
+                                <p class="card-text">${playlistName}</p>
+                                <p class="card-text">Tracks: 0</p>
+                                </a>
+                                <div class="row">
+                                <div class="col-12">
+                                <a
+                            href="${deleteUrl}"
+                            class="btn btn-danger btn-block"
+                        >${removing_value}</a>
+                                </div>
+                                </div>
+                            </div>
+                            
+                        </div>
+                        
                     </div>
-                    <a
-                        href="${deleteUrl}"
-                        class="btn btn-warning"
-                    >Unfollow</a>
                 `;
 
                     if (platform.toLowerCase() == "spotify") {
@@ -290,3 +320,9 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 });
+
+function confirmDelete(platform, playlistId) {
+    if (confirm("Are you sure you want to remmove this playlist?")) {
+        deletePlaylist(platform, playlistId);
+    }
+}

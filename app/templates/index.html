@@ -1,0 +1,68 @@
+{% extends "base.html" %} {% block title %}Login - Your App{% endblock %} {%
+block content %}
+<section class="hero bg-primary text-white text-center py-5">
+    <div class="container">
+        <h1 class="display-4">Playlist Management &amp; Sharing</h1>
+        <p class="lead">
+            Easily manage and transfer your playlists between Spotify and
+            Deezer, and share them with others.
+        </p>
+    </div>
+</section>
+
+<!-- Description Section -->
+<section class="container mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Project Description</h2>
+            <p>
+                The project aims to create a web application that allows users
+                to manage their playlists from different platforms, such as
+                Spotify and Deezer. Users can transfer playlists between the two
+                platforms and share them with other users.
+            </p>
+        </div>
+        <div class="col-md-6">
+            <h2>Technologies</h2>
+            <ul>
+                <li>UI - HTML, CSS</li>
+                <li>Database - SQLAlchemy</li>
+                <li>Programming Language - Python, Flask</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="bg-light py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Main Features</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <h3>Transfer Playlists</h3>
+                <p>
+                    Transfer playlists between Spotify and Deezer for easy
+                    platform transition.
+                </p>
+            </div>
+            <div class="col-md-4">
+                <h3>Share Playlists</h3>
+                <p>
+                    Share playlists with other users, making it easy to share
+                    your favorite music collections.
+                </p>
+            </div>
+            <div class="col-md-4">
+                <h3>Playlist Management</h3>
+                <p>
+                    Manage all your playlists from different platforms in one
+                    place. Add, delete, and analyze your playlists.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+{% if current_user.is_authenticated == False %}
+<div class="text-center mt-4">
+    <a href="/login" class="btn btn-success btn-lg">Get Started</a>
+</div>
+{% endif %} {% endblock %}

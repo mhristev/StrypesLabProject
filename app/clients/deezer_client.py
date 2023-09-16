@@ -23,12 +23,6 @@ class DeezerClient:
         expires_in_seconds = int(self.session_token_info.split("expires=")[1])
         expiration_time = datetime.now() + timedelta(seconds=expires_in_seconds)
         current_time = datetime.now()
-
-        # Check if the token is expired
-        if current_time >= expiration_time:
-            print("Access token has expired")
-        else:
-            print("Access token is still valid")
             
         return current_time >= expiration_time
         
@@ -104,7 +98,6 @@ class DeezerClient:
             'scope': 'basic_access,email,manage_library,delete_library'
         }
         response = requests.post(token_url, data=data)
-        print("TUKKKKKKKKKKKKK")
         print(response.text)
         if response.status_code == 200:
             return response.text
@@ -119,6 +112,8 @@ class DeezerClient:
             playlists_data = response.json()
             for playlist in playlists_data["data"]:
                 new_playlist = self.convert_to_playlist(playlist)
+                if new_playlist.name == "Loved Tracks":
+                    continue
                 playlists.append(new_playlist)
             return playlists
         else:

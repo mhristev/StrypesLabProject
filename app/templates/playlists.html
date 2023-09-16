@@ -40,13 +40,27 @@ block content %}
         max-width: 45px;
         max-height: 45px;
     }
+    .custom-thicc-border-right {
+        border-right: 2px solid rgb(99, 97, 99); /* You can adjust the thickness and color as needed */
+    }
+</style
 </style>
 <div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <input
+                type="text"
+                id="playlistSearch"
+                class="form-control"
+                placeholder="Search playlists"
+            />
+        </div>
+    </div>
     <div class="row">
-        <div class="col-6 border-right">
+        <div class="col-6 custom-thicc-border-right">
 <h1>Playlists Spotify</h1>
 {% if session.get("token_info_spotify") and spotify_playlists != None %}
-<div class="input-group">
+<div class="input-group mb-4">
     <form id="createPlaylistForm"  class="form-inline my-2 my-lg-0">
         <input type="hidden" name="form_name" value="spotify" />
         <input
@@ -71,6 +85,10 @@ block content %}
 
     <div id="playlistCard{{ playlist.id }}">
         <div class="card " style="width: 15rem">
+            <a
+                href="{{ url_for('view', playlist_id=playlist.id, platform='spotify', playlist_name=playlist.name) }}"
+                style="text-decoration: none; color: black;"
+                >
             <img
                 src="{{ playlist.image_url }}"
                 class="card-img-top"
@@ -79,40 +97,42 @@ block content %}
             <div class="card-body">
                 <p class="card-text">{{ playlist.name }}</p>
                 <p class="card-text">Tracks: {{ playlist.number_of_tracks }}</p>
+            </a>
+            <div class="row">
+                <div class="col-6">
+                    <a
+                    class="btn"
+                    data-toggle="modal"
+                    data-target="#deezerModal{{ playlist.id }}"
+                >
+                <img src="{{ url_for('static', filename='imgs/deezer_icon.png') }}" alt="Deezer Icon" class="img-fluid small-image" />
+                </a>
+                </div>
+                <div class="col-6">
+                    <a
+                        class="btn"
+                        href="{{ url_for('generate_token', playlist_id=playlist.id, playlist_name=playlist.name) }}""
+                    >
+                    <img src="{{ url_for('static', filename='imgs/share.png') }}" alt="Share Icon" class="img-fluid small-image" />
+                    </a>
+
+                </div>
             </div>
-            <a
-                href="{{ url_for('view', playlist_id=playlist.id, platform='spotify') }}"
-                class="btn btn-primary stretched-link"
-                >View</a
-            >
-        </div>
-        <!-- <a
-                href="{{ url_for('delete', platform='spotify', playlist_id=playlist.id) }}"
-                class="btn btn-warning"
-                >Unfollow</a
-            > -->
-        <a
-            class="btn btn-warning"
-            onclick="deletePlaylist('spotify', '{{ playlist.id }}')"
+            <div class="row">
+                <div class="col-12">
+                    <a
+            class="btn btn-danger btn-block" 
+            onclick="confirmDelete('spotify', '{{ playlist.id }}')"
         >
             Unfollow
         </a>
-
-        <a
-            class="btn btn-warning"
-            href="{{ url_for('generate_token', playlist_id=playlist.id, playlist_name=playlist.name) }}""
-        >
-            Share
-        </a>
-
-        <!-- Button trigger modal -->
-        <a
-            class="btn btn-warning"
-            data-toggle="modal"
-            data-target="#deezerModal{{ playlist.id }}"
-        >
-            Transfer to Deezer
-        </a>
+                </div>
+            </div>
+        
+        
+        </div>
+            
+        </div>
 
         <div
             class="modal fade deezerModal"
@@ -163,13 +183,6 @@ block content %}
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <!-- <button
-                            type="button"
-                            class="btn btn-secondary"
-                            data-dismiss="modal"
-                        >
-                            Cancel
-                        </button> -->
                         <button
                             type="button"
                             class="btn btn-primary"
@@ -197,7 +210,7 @@ block content %}
 <div class="col-6">
 <h1>Playlists Deezer</h1>
 {% if session.get("token_info_deezer") and deezer_playlists != None %}
-<div class="input-group">
+<div class="input-group mb-4">
     <form id="createPlaylistDeezerForm" class="form-inline my-2 my-lg-0">
         <input type="hidden" name="form_name" value="deezer" />
         <input
@@ -218,48 +231,45 @@ block content %}
 
 
     
-    <!-- <div class="row" id="deezerPlaylistsContainer">
-        <div class="row">
-            <div class="col-md-12">
-                <input
-                    type="text"
-                    id="playlistSearch"
-                    class="form-control"
-                    placeholder="Search playlists"
-                />
-            </div>
-        </div> -->
+
+        
         <div class="row" id="deezerPlaylistsContainer">
         {% for playlist in deezer_playlists %}
         <div class="col-6">
         <div id="playlistCard{{ playlist.id }}">
             <div class="card" style="width: 15rem">
+                <a href="{{ url_for('view', playlist_id=playlist.id, platform='deezer', playlist_name=playlist.name) }}" style="text-decoration: none; color: black;">
                 <img
                     src="{{ playlist.image_url }}"
                     class="card-img-top"
                     alt="..."
                 />
                 <div class="card-body">
+                    
                     <p class="card-text">{{ playlist.name }}</p>
                     <p class="card-text">
                         Tracks: {{ playlist.number_of_tracks }}
                     </p>
-                    <div class="row">
-                        <div class="col-6">
-                            <a class="btn btn-block" data-toggle="modal" data-target="#spotifyModal{{ playlist.id }}"><img src="{{ url_for('static', filename='imgs/spotify_icon.png') }}" alt="Spotify Icon" class="img-fluid small-image" /></a>
+                </a>
+                   
+         
+                        <div class="row">
+                            <div class="col-6">
+                                <a class="btn btn-block" data-toggle="modal" data-target="#spotifyModal{{ playlist.id }}"><img src="{{ url_for('static', filename='imgs/spotify_icon.png') }}" alt="Spotify Icon" class="img-fluid small-image" /></a>
+                            </div>
+                            <div class="col-6">
+                                <a class="btn" href="{{ url_for('generate_token', playlist_id=playlist.id, playlist_name=playlist.name) }}"><img src="{{ url_for('static', filename='imgs/share.png') }}" alt="Share Icon" class="img-fluid small-image" /></a>
+                            </div>
                         </div>
-                        <div class="col-6">
-                            <a class="btn" href="{{ url_for('generate_token', playlist_id=playlist.id, playlist_name=playlist.name) }}"><img src="{{ url_for('static', filename='imgs/share.png') }}" alt="Share Icon" class="img-fluid small-image" /></a>
+                                
+                        
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <a class="btn btn-danger btn-block"  onclick="confirmDelete('deezer', '{{ playlist.id }}')">Delete</a>
+                            </div>
                         </div>
-                    </div>
-                            <a href="{{ url_for('view', playlist_id=playlist.id, platform='deezer') }}" class=" stretched-link"></a>
-                       
-                    
-                    <div class="row">
-                        <div class="col-12">
-                            <a class="btn btn-danger btn-block" onclick="deletePlaylist('deezer', '{{ playlist.id }}')">Delete</a>
-                        </div>
-                    </div>
+                
                 </div>
                 
             </div>

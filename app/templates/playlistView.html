@@ -11,51 +11,56 @@ block content %}
     <div class="row">
         <!-- Left Column -->
         <div class="col-md-6">
-            <h1>Tracks</h1>
+            <h2>{{ playlist_name }}</h2>
             <div id="playlistTracks">
                 {% for track in tracks %}
                 <div
-                    class="row mb-4"
+                    class="card mb-3"
+                    style="max-width: 540px"
                     id="{% if not track.uri %}trackCard{{ track.id }}{% else %}trackCard{{ track.uri }}{% endif %}"
                 >
-                    <!-- Start a new row for each track -->
-                    <div class="col-md-12">
-                        <div class="d-flex position-relative">
+                    <div class="row g-0">
+                        <div class="col-md-4">
                             <img
                                 src="{{ track.image_url }}"
-                                class="flex-shrink-0 me-3"
+                                class="img-fluid rounded-start"
                                 alt="..."
-                                width="200"
-                                height="200"
                             />
-                            <div>
-                                <h5 class="mt-0">{{ track.name }}</h5>
-                                <p class="mt-0">
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ track.name }}</h5>
+                                <p class="text-muted">
                                     Album: {{ track.album.name }}
                                 </p>
-                                {% for artist in track.artists %}
-                                <p>{{ artist.name }}</p>
-                                {% endfor %}
+
+                                <p class="card-text">
+                                    {% for artist in track.artists %} {{
+                                    artist.name }} {% if not loop.last %},{%
+                                    endif %} {% endfor %}
+                                </p>
                             </div>
                         </div>
-                        <button
-                            class="btn btn-danger remove-track-button"
-                            data-track-id="{% if not track.uri %}{{ track.id }}{% else %}{{ track.uri }}{% endif %}"
-                            onclick="removeTrackFromPlaylist('{{ track.uri if track.uri else track.id }}', '{{ playlist_id }}', '{{ platform }}')"
-                        >
-                            Remove
-                        </button>
                     </div>
+                    <button
+                        class="btn btn-danger remove-track-button"
+                        data-track-id="{% if not track.uri %}{{ track.id }}{% else %}{{ track.uri }}{% endif %}"
+                        onclick="removeTrackFromPlaylist('{{ track.uri if track.uri else track.id }}', '{{ playlist_id }}', '{{ platform }}')"
+                    >
+                        Remove
+                    </button>
                 </div>
+
                 <!-- Close the row for each track -->
                 {% endfor %}
             </div>
         </div>
         <!-- Right Column -->
+
         <div class="col-md-6">
             <!-- Search Bar -->
-
-            <div class="mb-3">
+            <h3>Add new songs</h3>
+            <div class="input-group mb-3">
                 <input
                     type="text"
                     class="form-control"

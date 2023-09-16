@@ -1,28 +1,49 @@
 {% extends "base.html" %} {% block title %}Login - Your App{% endblock %} {%
 block content %}
-<h1>Hello, {{ current_user.display_name }}</h1>
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <h3>Recommended from Deezer</h3>
-        {% for track in dz_tracks %}
-        <p>{{ track.name }}</p>
-        {% for artist in track.artists %}
-        <p>{{ artist.name }}</p>
-        {% endfor %} {% endfor %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10 text-center">
+            <h1 class="display-4">🎧 Melodies Just for You 🎧</h1>
+        </div>
     </div>
-    <div class="col-md-6">
-        <h3>Recommended from Spotify</h3>
-        {% for track in sp_tracks %}
-        <p>{{ track.name }}</p>
-        {% for artist in track.artists %}
-        <p>{{ artist.name }}</p>
-        {% endfor %} {% endfor %}
-    </div>
-    <!-- <div class="col-md-6">
-        <h3>Top genres in Spotify</h3>
-        {% for genre, count in genres %}
-        <p>{{genre}}</p>
-        {% endfor %}
-    </div> -->
 </div>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        {% for track in recommended_tracks %}
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <a href="{{ track.uri }}" class="btn btn-primary stretched-link"
+                    >Go somewhere</a
+                >
+                <div class="row g-0">
+                    <div class="col-md-4">
+                        <img
+                            src="{{ track.image_url }}"
+                            class="img-fluid rounded-start"
+                            alt="..."
+                        />
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ track.name }}</h5>
+                            <p class="card-text">
+                                {% for artist in track.artists %} {{ artist.name
+                                }} {% if not loop.last %},{% endif %} {% endfor
+                                %}
+                            </p>
+                            <p class="card-text">
+                                <small class="text-muted"
+                                    >{{ track.album.name }}</small
+                                >
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
 {% endblock %}

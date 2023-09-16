@@ -26,7 +26,8 @@ function searchTracks() {
             // Create Bootstrap cards for each track
             data.results.forEach((track) => {
                 const newCard = document.createElement("div");
-                newCard.className = "row g-0";
+                newCard.className = "card mb-3";
+                newCard.style = "max-width: 540px;";
                 var track_identifier = null;
                 if (track.uri == null) {
                     track_identifier = track.id;
@@ -36,20 +37,25 @@ function searchTracks() {
                 albumName = track.album_name;
                 newCard.id = "FoundTrackCard" + track_identifier;
                 newCard.innerHTML = `
-                <div class="col-md-4">
+
+               
+  <div class="row g-0">
+    <div class="col-md-4">
       <img src="${track.image_url}" class="img-fluid rounded-start" alt="...">
     </div>
     <div class="col-md-8">
       <div class="card-body">
-        <h5 class="card-title"> ${track.name}</h5>
-        <p class="card-text">Artist: ${track.artists
+        <h5 class="card-title">${track.name}</h5>
+        <p class="card-text"><small class="text-muted">Album: ${albumName}</small></p>
+        <p class="card-text">${track.artists
             .map((artist) => artist.name)
             .join(", ")}</p>
-        <p class="card-text"><small class="text-muted">Album:${albumName}</small></p>
-        <button class="btn btn-primary" onclick="addToPlaylist('${track_identifier}')">Add to Playlist</button>
+            <button class="btn btn-primary" onclick="addToPlaylist('${track_identifier}')">Add to Playlist</button>
       </div>
     </div>
   </div>
+
+
   `;
 
                 searchResultsDiv.appendChild(newCard);
@@ -88,33 +94,42 @@ function addToPlaylist(trackId) {
                     track_album = data.data.album_name;
                     console.log(track_name, track_image);
                     const cardHtml = `
-                    <div class="row mb-4" id="trackCard${trackId}">
-                        <!-- Start a new row for each track -->
-                        <div class="col-md-12">
-                            <div class="d-flex position-relative">
-                                <img
-                                    src="${track_image}"
-                                    class="flex-shrink-0 me-3"
-                                    alt="..."
-                                    width="200"
-                                    height="200"
-                                />
-                                <div>
-                                    <h5 class="mt-0">${track_name}</h5>
-                                    <p class="mt-0">Album: ${track_album}</p>
-                                    <p class="mt-0">${data.data.artists
-                                        .map((artist) => artist.name)
-                                        .join(", ")}</p>
-                                </div>
+                    <div
+                    class="card mb-3"
+                    style="max-width: 540px"
+                    id="trackCard${trackId}"
+                >
+                    <div class="row g-0">
+                        <div class="col-md-4">
+                            <img
+                                src="${track_image}"
+                                class="img-fluid rounded-start"
+                                alt="..."
+                            />
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-body">
+                                <h5 class="card-title">${track_name}</h5>
+                                <p class="text-muted">
+                                    Album: ${track_album}
+                                </p>
+
+                                <p class="card-text">
+                                ${data.data.artists
+                                    .map((artist) => artist.name)
+                                    .join(", ")}
+                                </p>
                             </div>
-                            <button
-                                class="btn btn-danger remove-track-button"
-                                onclick="removeTrackFromPlaylist('${trackId}', '${playlistId}', '${platform}')"
-                            >
-                                Remove
-                            </button>
                         </div>
                     </div>
+                    <button
+                        class="btn btn-danger remove-track-button"
+                        data-track-id="{% if not track.uri %}{{ track.id }}{% else %}{{ track.uri }}{% endif %}"
+                        onclick="removeTrackFromPlaylist('${trackId}', '${playlistId}', '${platform}')"
+                    >
+                        Remove
+                    </button>
+                </div>
                 `;
                     const playlistTracksContainer =
                         document.getElementById("playlistTracks");

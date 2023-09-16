@@ -1,18 +1,107 @@
 {% extends "base.html" %} {% block title %}Login - Your App{% endblock %} {%
 block content %}
-<h1>Hello, {{ current_user.display_name }}</h1>
+<style>
+    .leaderboard {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .leaderboard li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #ccc;
+        padding: 10px 0;
+    }
+
+    .position {
+        width: 30px;
+        font-weight: bold;
+    }
+
+    .artist-name {
+        flex-grow: 1;
+    }
+    .score {
+        font-weight: bold;
+    }
+    .title-container {
+        text-align: center;
+        padding: 20px 0;
+        box-shadow: 0 4px 6px rgba(158, 128, 250, 0.763);
+    }
+
+    .title-container h1 {
+        font-size: 36px;
+        margin: 0;
+    }
+
+    .title-container p {
+        font-size: 18px;
+        margin-top: 10px;
+    }
+    .title-container h1::before,
+    .title-container h1::after {
+        content: "🎶";
+        font-size: 48px;
+        vertical-align: middle;
+        margin: 0 10px;
+    }
+    .user-info {
+        padding: 20px; /* Add padding for spacing */
+        border-radius: 10px; /* Rounded corners for a nicer look */
+        text-align: center; /* Center-align the content */
+        box-shadow: 0 4px 6px rgba(166, 2, 255, 0.763); /* Add a subtle shadow */
+    }
+
+    .user-info h1 {
+        font-size: 36px; /* Adjust the font size as needed */
+        margin: 0; /* Remove default margins */
+    }
+
+    .user-info h1::before {
+        content: "👋"; /* Add a greeting emoji before the user's name */
+        font-size: 48px;
+        display: block; /* Show it on a new line */
+    }
+</style>
+
 <div class="row justify-content-center">
-    <div class="col-md-6">
-        <h3>Top artists in Spotify</h3>
-        {% for artist in artists %}
-        <p>{{artist.name}}</p>
-        {% endfor %}
+    <div class="col-md-6 col-lg-4">
+        <div class="user-info">
+            <h1>Hey, {{ current_user.display_name }}</h1>
+        </div>
     </div>
-    <div class="col-md-6">
-        <h3>Top genres in Spotify</h3>
-        {% for genre, count in genres %}
-        <p>{{genre}}</p>
-        {% endfor %}
+
+    <div class="col-4">
+        <div class="title-container">
+            <h3>🎤 Top 20 Artists Leaderboard 🎤</h3>
+            <p>See who's rocking your charts!</p>
+        </div>
+        <ol class="leaderboard">
+            {% for artist in artists %}
+            <li>
+                <span class="position">{{ loop.index }}</span>
+                <span class="artist-name">{{ artist.name }}</span>
+            </li>
+            {% endfor %}
+        </ol>
+    </div>
+    <div class="col-4">
+        <div class="title-container">
+            <h3>🎵 Top 5 Genres Leaderboard 🎵</h3>
+            <p>See which genres are your favorites!</p>
+        </div>
+        <ol class="leaderboard">
+            {% for genre, count in genres %}
+            <li>
+                <span class="position">{{ loop.index }}</span>
+                <span class="artist-name">{{ genre }}</span>
+                <span class="score">{{ count }}</span>
+            </li>
+            {% endfor %}
+        </ol>
     </div>
 </div>
 {% endblock %}
