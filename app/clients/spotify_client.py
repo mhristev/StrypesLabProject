@@ -205,14 +205,16 @@ class SpotifyClient:
         artists_query = "".join([f"artist:{artist}" for artist in artists_names])
 
         url = f"{self.SPOTIFY_API_BASE_URL}search?q={name}{artists_query}&type=track&offset=0&limit=5"
-        
         response = requests.get(url, headers=headers)
             
         if response.status_code == 200:
             songs_data = response.json()
             tracks = songs_data.get("tracks", {}).get("items", [])
             for track in tracks:
-                return self._get_track_uri_if_found(track, name, artists_names)
+                print("TUK LI SME")
+                found = self._get_track_uri_if_found(track, name, artists_names)
+                if found is not None:
+                    return found
     
         return self.search_track_with_name_separator(name, artists_names, album_name)
     
@@ -226,7 +228,9 @@ class SpotifyClient:
             songs_data = response.json()
             tracks = songs_data.get("tracks", {}).get("items", [])
             for track in tracks:
-                return self._get_track_uri_if_found(track, name, artists_names)
+                found = self._get_track_uri_if_found(track, name, artists_names)
+                if found is not None:
+                    return found
         
         return self.search_track_and_with_album(name, artists_names, album_name)
     
@@ -240,7 +244,10 @@ class SpotifyClient:
             songs_data = response.json()
             tracks = songs_data.get("tracks", {}).get("items", [])
             for track in tracks:
-                return self._get_track_uri_if_found(track, name, artists_names)
+                found = self._get_track_uri_if_found(track, name, artists_names)
+                if found is not None:
+                    return found
+                
         return self.search_track_and_with_album_not_lowered(name, artists_names, album_name)
     
     def search_track_and_with_album_not_lowered(self, name, artists_names, album_name):
@@ -253,7 +260,9 @@ class SpotifyClient:
             songs_data = response.json()
             tracks = songs_data.get("tracks", {}).get("items", [])
             for track in tracks:
-                return self._get_track_uri_if_found(track, name, artists_names)
+                found = self._get_track_uri_if_found(track, name, artists_names)
+                if found is not None:
+                    return found
         
         return self.search_track_dash(name, artists_names, album_name)
     
@@ -267,7 +276,9 @@ class SpotifyClient:
             songs_data = response.json()
             tracks = songs_data.get("tracks", {}).get("items", [])
             for track in tracks:
-                return self._get_track_uri_if_found(track, name, artists_names)
+                found = self._get_track_uri_if_found(track, name, artists_names)
+                if found is not None:
+                    return found
                 
     def get_tracks_uri(self, tracks):
         track_uris = []
@@ -354,7 +365,6 @@ class SpotifyClient:
         }
         
         response = requests.delete(url, headers=headers, data=json.dumps(data))
-        print(response.text)
         if response.status_code == 200:
             print("Successfully removed track from playlist!")
         else:
