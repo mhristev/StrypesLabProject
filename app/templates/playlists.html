@@ -161,7 +161,7 @@ block content %}
                             type="button"
                             class="btn btn-primary"
                             id="proceedButton{{ playlist.id }}"
-                            onclick="transferSpotifyToDeezer('{{ playlist.id }}', document.getElementById('deezerInput{{ playlist.id }}').value)"
+                            onclick="transferPlaylist('{{ playlist.id }}', document.getElementById('deezerInput{{ playlist.id }}').value, 'spotify', 'deezer')"
                         >
                             Proceed
                         </button>
@@ -295,18 +295,11 @@ block content %}
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <!-- <button
-                            type="button"
-                            class="btn btn-secondary"
-                            data-dismiss="modal"
-                        >
-                            Cancel
-                        </button> -->
                             <button
                                 type="button"
                                 class="btn btn-primary"
                                 id="proceedButton{{ playlist.id }}"
-                                onclick="transferDeezerToSpotify('{{ playlist.id }}', document.getElementById('spotifyInput{{ playlist.id }}').value)"
+                                onclick="transferPlaylist('{{ playlist.id }}', document.getElementById('spotifyInput{{ playlist.id }}').value, 'deezer', 'spotify')"
                             >
                                 Proceed
                             </button>

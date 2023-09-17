@@ -1,11 +1,21 @@
-function transferDeezerToSpotify(playlistId, playlistName) {
+function transferPlaylist(playlistId, playlistName, fromPlatform, toPlatform) {
     var loadingElement = document.getElementById("loading" + playlistId);
     loadingElement.style.display = "block";
 
     var proceedButton = document.getElementById("proceedButton" + playlistId);
     proceedButton.disabled = true;
 
-    fetch("/transfer_playlist_deezer_to_spotify", {
+    var url = "/transfer_playlist/" + fromPlatform + "/" + toPlatform;
+
+    var remove_var = "";
+
+    if (toPlatform == "spotify") {
+        remove_var = "Unfollow";
+    } else if (toPlatform == "deezer") {
+        remove_var = "Delete";
+    }
+
+    fetch(url, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -48,7 +58,7 @@ function transferDeezerToSpotify(playlistId, playlistName) {
                             <a
                         href="${deleteUrl}"
                         class="btn btn-danger btn-block"
-                    >Unfollow</a>
+                    >${remove_var}</a>
                             </div>
                             </div>
                         </div>
@@ -59,92 +69,34 @@ function transferDeezerToSpotify(playlistId, playlistName) {
                     
                 `;
 
-                    const spotifyPlaylistsContainer = document.getElementById(
-                        "spotifyPlaylistsContainer"
-                    );
-                    const firstCard = spotifyPlaylistsContainer.firstChild;
+                    if (toPlatform == "spotify") {
+                        const spotifyPlaylistsContainer =
+                            document.getElementById(
+                                "spotifyPlaylistsContainer"
+                            );
+                        const firstCard = spotifyPlaylistsContainer.firstChild;
 
-                    spotifyPlaylistsContainer.insertBefore(newCard, firstCard);
+                        spotifyPlaylistsContainer.insertBefore(
+                            newCard,
+                            firstCard
+                        );
+                    } else if (toPlatform == "deezer") {
+                        const deezerPlaylistsContainer =
+                            document.getElementById("deezerPlaylistsContainer");
+                        const firstCard = deezerPlaylistsContainer.firstChild;
+
+                        deezerPlaylistsContainer.insertBefore(
+                            newCard,
+                            firstCard
+                        );
+                    }
                 });
-                $("#spotifyModal" + playlistId).modal("hide");
-            } else {
-                console.error("Failed to transfer playlist");
-            }
-        })
-        .catch((error) => {
-            console.error("Error:", error);
-        });
-}
 
-function transferSpotifyToDeezer(playlistId, playlistName) {
-    console.log(playlistId);
-    var loadingElement = document.getElementById("loading" + playlistId);
-    loadingElement.style.display = "block";
-
-    var proceedButton = document.getElementById("proceedButton" + playlistId);
-    proceedButton.disabled = true;
-
-    fetch("/transfer_playlist_spotify_to_deezer", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            playlist_id: playlistId,
-            name: playlistName,
-        }),
-    })
-        .then((response) => {
-            if (response.ok) {
-                response.json().then((data) => {
-                    const new_playlistId = data.data.playlist_id;
-                    const playlistName = data.data.playlist_name;
-                    const nbOfTracks = data.data.number_of_tracks;
-                    const viewUrl = data.data.view_url;
-                    const deleteUrl = data.data.delete_url;
-                    const image_url = data.data.image_url;
-
-                    const newCard = document.createElement("div");
-                    newCard.className = "col-6";
-                    newCard.innerHTML = `
-                    <div id="playlistCard${playlistId}">
-                    <div class="card" style="width: 15rem">
-                    <a
-                            href="${viewUrl}"
-                            style="text-decoration: none; color: black;"
-                        >    
-                    <img
-                            src="${image_url}"
-                            class="card-img-top"
-                            alt="..."
-                        />
-                        <div class="card-body">
-                            <p class="card-text">${playlistName}</p>
-                            <p class="card-text">Tracks: ${nbOfTracks}</p>
-                            </a>
-                            <div class="row">
-                            <div class="col-12">
-                            <a
-                        href="${deleteUrl}"
-                        class="btn btn-danger btn-block"
-                    >Delete</a>
-                            </div>
-                            </div>
-                        </div>
-                        
-                    </div>
-                    
-                </div>
-                `;
-
-                    const deezerPlaylistsContainer = document.getElementById(
-                        "deezerPlaylistsContainer"
-                    );
-                    const firstCard = deezerPlaylistsContainer.firstChild;
-
-                    deezerPlaylistsContainer.insertBefore(newCard, firstCard);
-                });
-                $("#deezerModal" + playlistId).modal("hide");
+                if (toPlatform == "spotify") {
+                    $("#spotifyModal" + playlistId).modal("hide");
+                } else if (toPlatform == "deezer") {
+                    $("#deezerModal" + playlistId).modal("hide");
+                }
             } else {
                 console.error("Failed to transfer playlist");
             }
