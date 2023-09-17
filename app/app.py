@@ -4,9 +4,9 @@ import os
 from clients.spotify_client import SpotifyClient
 from clients.deezer_client import DeezerClient
 from flask_login import LoginManager
-import uuid
 from flask_login import login_user, login_required, logout_user, current_user
 
+import uuid
 from model.track import Track
 from model.artist import Artist
 from model.album import Album
@@ -313,7 +313,7 @@ def create_playlist():
         'playlist_id': playlist_id,
         'playlist_name': new_playlist_name,
         'image_url': image_url,
-        'view_url': url_for('view', playlist_id=playlist_id, platform=form_name.lower()),
+        'view_url': url_for('view', playlist_id=playlist_id, platform=form_name.lower(), playlist_name=new_playlist_name),
         'delete_url': url_for('delete', platform=form_name.lower(), playlist_id=playlist_id),
         'platform' : form_name.lower()
     }
@@ -434,6 +434,7 @@ def remove_track_from_playlist():
 @app.route('/transfer_shared_playlist', methods=['POST'])
 @login_required
 def transfer_shared_playlist():
+    print("TRANSFER_SHARE_PLAYLIST")
     check_for_expired_tokens()
     platform = request.form['platform']
     token_id = request.form['token_id']

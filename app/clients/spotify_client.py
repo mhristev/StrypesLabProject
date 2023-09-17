@@ -286,6 +286,8 @@ class SpotifyClient:
             name = track.name
             artists = track.artists
             artists_names = [artist.name for artist in artists]
+            # if track.album == None: # prevents a bug that should be fixed in the future
+            #     continue
             track_uri = self.search_track(name=name, artists_names=artists_names, album_name=track.album.name)
             if track_uri and track_uri not in track_uris:
                 track_uris.append(track_uri)
