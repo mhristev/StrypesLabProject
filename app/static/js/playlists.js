@@ -107,6 +107,7 @@ function transferPlaylist(playlistId, playlistName, fromPlatform, toPlatform) {
 }
 
 function deletePlaylist(platform, playlistId) {
+    console.log("ASD");
     fetch(`/delete/${platform}/${playlistId}`, {
         method: "POST",
     })
@@ -187,8 +188,12 @@ function createPlaylist(platform, event) {
                                 </a>
                                 <div class="row">
                                 <div class="col-12">
+                                
+                                   
+                               
                                 <a
                             href="${deleteUrl}"
+                            onclick="confirmDelete('${platform.toLowerCase()}', '${playlistId}')"
                             class="btn btn-danger btn-block"
                         >${removing_value}</a>
                                 </div>

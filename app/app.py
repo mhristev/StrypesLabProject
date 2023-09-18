@@ -18,9 +18,9 @@ import pytz
 from model.user import db
 from datetime import datetime, timedelta
 
-TOKEN_INFO_SPOTIFY = 'token_info_spotify'
-TOKEN_INFO_DEEZER = 'token_info_deezer'
-TOKEN_DEEZER_EXPIRES_ON = 'token_deezer_expires_on'
+TOKEN_INFO_SPOTIFY = "token_info_spotify"
+TOKEN_INFO_DEEZER = "token_info_deezer"
+TOKEN_DEEZER_EXPIRES_ON = "token_deezer_expires_on"
 DOMAIN_URL = "http://127.0.0.1:5000/"
 
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
@@ -36,9 +36,9 @@ app = Flask(__name__)
 
 login_manager = LoginManager(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] =\
-        'sqlite:///' + os.path.join(basedir, 'database.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_DATABASE_URI"] =\
+        "sqlite:///" + os.path.join(basedir, "database.db")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
 app.app_context().push()
@@ -50,7 +50,7 @@ def get_user(id):
 
 @login_manager.unauthorized_handler
 def unauthorized():
-    return redirect(url_for('login'))
+    return redirect(url_for("login"))
 
 def get_spotify_client(session_token_info):
     return SpotifyClient(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, session_token_info=session_token_info)
@@ -78,11 +78,11 @@ def check_for_expired_tokens():
             print(given_datetime)
             print("Token not expired")
 
-@app.route('/')
+@app.route("/")
 def index():
     return render_template("index.html")
 
-@app.route('/profile')
+@app.route("/profile")
 @login_required
 def profile():
     check_for_expired_tokens()
@@ -94,11 +94,11 @@ def profile():
     top_3_genres = genre_counts.most_common(5)
     return render_template('profile.html', artists=artists, genres=top_3_genres)
 
-@app.route('/login')
+@app.route("/login")
 def login():
     return render_template("login.html")
 
-@app.route('/logout')
+@app.route("/logout")
 @login_required
 def logout():
     session.pop(TOKEN_INFO_SPOTIFY, None)
@@ -106,7 +106,7 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-@app.route('/recommendations')
+@app.route("/recommendations")
 @login_required
 def recommendations():
     check_for_expired_tokens()
@@ -126,7 +126,7 @@ def recommendations():
 
     return render_template("recommendations.html", recommended_tracks=recommended_tracks)
 
-@app.route('/playlists')
+@app.route("/playlists")
 @login_required
 def playlists():
     check_for_expired_tokens()
@@ -145,7 +145,7 @@ def playlists():
         
     return render_template('playlists.html', spotify_playlists=spotify_playlists, deezer_playlists=deezer_playlists)
 
-@app.route('/generate_token', methods=['GET', 'POST'])
+@app.route("/generate_token", methods=['GET', 'POST'])
 @login_required
 def generate_token():
     check_for_expired_tokens()
@@ -220,7 +220,7 @@ def generate_token():
 
     return render_template("shared_playlist_preview.html", token=new_token, url=url)
 
-@app.route('/shared/<token_id>', methods=['GET'])
+@app.route("/shared/<token_id>", methods=['GET'])
 def view_playlist(token_id):
     token = Token.query.filter_by(id=token_id).first()
 
@@ -234,13 +234,13 @@ def view_playlist(token_id):
     url = DOMAIN_URL + "shared/" + token_id
     return render_template("shared_playlist_preview.html", token=token, url=url)
 
-@app.route('/auth_spotify')
+@app.route("/auth_spotify")
 def auth_spotify():
     spotify_client = get_spotify_client(session_token_info=None)
     auth_url = spotify_client.login()
     return redirect(auth_url)
 
-@app.route('/auth_deezer')
+@app.route("/auth_deezer")
 def auth_deezer():
     deezer_client = get_deezer_client(session_token_info=None)
     auth_url = deezer_client.authorization_url()
@@ -269,7 +269,7 @@ def callback():
     else:
         return "Failed to retrieve access token."
     
-@app.route('/redirect')
+@app.route("/redirect")
 def redirect_page():
     code = request.args.get('code')
     spotify_client = get_spotify_client(session_token_info=None)
@@ -291,15 +291,15 @@ def redirect_page():
     else:
         return "Failed to retrieve access token."
 
-@app.route('/create_playlist', methods=['POST'])
+@app.route("/create_playlist", methods=["POST"])
 @login_required
 def create_playlist():
     check_for_expired_tokens()
     token_info_spotify = session.get(TOKEN_INFO_SPOTIFY)
     token_info_deezer = session.get(TOKEN_INFO_DEEZER)
     
-    form_name = request.form['form_name']
-    new_playlist_name = request.form['new_playlist_name']
+    form_name = request.form["form_name"]
+    new_playlist_name = request.form["new_playlist_name"]
     playlist_id = None
     if form_name.lower() == "spotify":
         spotify_client = get_spotify_client(session_token_info=token_info_spotify)
@@ -310,16 +310,16 @@ def create_playlist():
     image_url = "https://e-cdns-images.dzcdn.net/images/cover//500x500-000000-80-0-0.jpg"
     
     data = { 
-        'playlist_id': playlist_id,
-        'playlist_name': new_playlist_name,
-        'image_url': image_url,
-        'view_url': url_for('view', playlist_id=playlist_id, platform=form_name.lower(), playlist_name=new_playlist_name),
-        'delete_url': url_for('delete', platform=form_name.lower(), playlist_id=playlist_id),
-        'platform' : form_name.lower()
+        "playlist_id": playlist_id,
+        "playlist_name": new_playlist_name,
+        "image_url": image_url,
+        "view_url": url_for("view", playlist_id=playlist_id, platform=form_name.lower(), playlist_name=new_playlist_name),
+        "delete_url": url_for("delete", platform=form_name.lower(), playlist_id=playlist_id),
+        "platform" : form_name.lower()
     }
     return jsonify(data=data), 200
 
-@app.route('/add_to_playlist', methods=['POST'])
+@app.route("/add_to_playlist", methods=["POST"])
 @login_required
 def add_to_playlist():
     check_for_expired_tokens()
@@ -348,7 +348,7 @@ def add_to_playlist():
         }
     return jsonify(data=serialized_data), 200
 
-@app.route('/view/<playlist_id>/<platform>/<playlist_name>', methods=['GET'])
+@app.route("/view/<playlist_id>/<platform>/<playlist_name>", methods=["GET"])
 @login_required
 def view(playlist_id, platform, playlist_name):
     check_for_expired_tokens()
@@ -365,7 +365,7 @@ def view(playlist_id, platform, playlist_name):
 
     return render_template("playlistView.html", tracks=tracks, playlist_id=playlist_id, platform=platform.lower(), playlist_name=playlist_name)
 
-@app.route('/delete/<platform>/<playlist_id>', methods=['POST'])
+@app.route("/delete/<platform>/<playlist_id>", methods=["POST"])
 @login_required
 def delete(platform, playlist_id):
     check_for_expired_tokens()
@@ -378,10 +378,10 @@ def delete(platform, playlist_id):
     elif platform.lower() == "deezer":
         deezer_client = get_deezer_client(session_token_info=token_info_deezer)
         deezer_client.delete_playlist(playlist_id=playlist_id)
-
-    return '', 200
     
-@app.route('/search_tracks', methods=['POST'])
+    return "", 200
+    
+@app.route("/search_tracks", methods=["POST"])
 @login_required
 def search():
     check_for_expired_tokens()
@@ -412,7 +412,7 @@ def search():
 
     return jsonify(results=serialized_results)
 
-@app.route('/remove_track_from_playlist', methods=['POST'])
+@app.route("/remove_track_from_playlist", methods=["POST"])
 @login_required
 def remove_track_from_playlist():
     check_for_expired_tokens()
@@ -431,10 +431,9 @@ def remove_track_from_playlist():
         deezer_client.remove_track_from_playlist(playlist_id=playlist_id, track_id=track_id)
     return jsonify(), 200
 
-@app.route('/transfer_shared_playlist', methods=['POST'])
+@app.route("/transfer_shared_playlist", methods=["POST"])
 @login_required
 def transfer_shared_playlist():
-    print("TRANSFER_SHARE_PLAYLIST")
     check_for_expired_tokens()
     platform = request.form['platform']
     token_id = request.form['token_id']
@@ -464,7 +463,7 @@ def transfer_shared_playlist():
         deezer_client.add_tracks_to_playlist(tracks=tracks, playlist_id=new_playlist_id)
     return redirect(url_for("playlists"))
     
-@app.route('/transfer_playlist/<from_platform>/<to_platform>', methods=['POST'])
+@app.route("/transfer_playlist/<from_platform>/<to_platform>", methods=["POST"])
 @login_required
 def transfer_playlist_deezer_to_spotify(from_platform, to_platform):
     check_for_expired_tokens()
