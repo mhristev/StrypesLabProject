@@ -173,10 +173,8 @@ function createPlaylist(platform, event) {
                     newCard.innerHTML = `
                     <div id="playlistCard${playlistId}">
                         <div class="card" style="width: 15rem">
-                        <a
-                                href="${viewUrl}"
-                                style="text-decoration: none; color: black;"
-                            >    
+                        <a href="${viewUrl}"
+                            style="text-decoration: none; color: black;">
                         <img
                                 src="${image_url}"
                                 class="card-img-top"
@@ -188,9 +186,6 @@ function createPlaylist(platform, event) {
                                 </a>
                                 <div class="row">
                                 <div class="col-12">
-                                
-                                   
-                               
                                 <a
                             href="${deleteUrl}"
                             onclick="confirmDelete('${platform.toLowerCase()}', '${playlistId}')"

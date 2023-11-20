@@ -9,5 +9,3 @@ class Track(db.Model):
     album = db.relationship('Album', backref='tracks')
     artists = db.relationship('Artist', secondary='track_artist', back_populates='tracks')
     playlists = db.relationship('Playlist', secondary='playlist_track', back_populates='tracks')
-
-
